@@ -690,8 +690,10 @@
 
                 // API configuration
                 const wsUrl = window.location.hostname === 'localhost' 
-                    ? 'ws://localhost:3000/ws' 
-                    : `wss://${window.location.host}/ws`;
+                    ? 'ws://localhost:3000' 
+                    : `wss://${window.location.host}`;
+                    
+                let sessionId = Math.random().toString(36).substring(7);
 
                 const apiUrl = window.location.hostname === 'localhost' 
                     ? 'http://localhost:3000/api' 
@@ -710,41 +712,65 @@
                     return 'Ready';
                 });
 
-                // Connect to L1_ORCH
+                // Connect to L1_ORCH via WebSocket
                 function connectWebSocket() {
-                    // For now, we'll use HTTP polling instead of WebSocket
-                    // This can be upgraded to real WebSocket later
-                    connected.value = true;
-                    pollMessages();
-                }
-
-                // Poll for messages (temporary until WebSocket is implemented)
-                async function pollMessages() {
-                    try {
-                        const response = await fetch(`${apiUrl}/messages?limit=50`);
-                        const data = await response.json();
+                    ws = new WebSocket(wsUrl);
+                    
+                    ws.onopen = () => {
+                        console.log('Connected to ADE Hub');
+                        connected.value = true;
+                        currentStatus.value = '';
+                    };
+                    
+                    ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        console.log('Received:', data);
                         
-                        // Filter for L1_ORCH messages
-                        const orchMessages = data.messages
-                            .filter(m => m.from === 'L1_ORCH' || m.to === 'L1_ORCH')
-                            .map(m => ({
-                                id: m.id,
-                                type: m.from === 'L1_ORCH' ? 'message-orch' : 'message-user',
-                                content: m.content,
-                                timestamp: m.timestamp
-                            }));
-
-                        // Update messages if new ones arrived
-                        if (orchMessages.length > messages.value.length) {
-                            messages.value = orchMessages;
+                        if (data.type === 'agent_progress') {
+                            currentStatus.value = data.message;
+                            isTyping.value = true;
+                        } else if (data.type === 'agent_response') {
+                            isTyping.value = false;
+                            currentStatus.value = '';
+                            
+                            // Add the response message
+                            messages.value.push({
+                                id: `msg-${++messageId}`,
+                                type: 'message-orch',
+                                content: formatAgentResponse(data),
+                                timestamp: new Date().toISOString()
+                            });
+                            
+                            sending.value = false;
                             scrollToBottom();
                         }
-                    } catch (error) {
-                        console.error('Failed to poll messages:', error);
-                    }
+                    };
+                    
+                    ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        connected.value = false;
+                    };
+                    
+                    ws.onclose = () => {
+                        connected.value = false;
+                        currentStatus.value = 'Reconnecting...';
+                        setTimeout(connectWebSocket, 3000);
+                    };
+                }
 
-                    // Continue polling
-                    setTimeout(pollMessages, 2000);
+                // Format agent response
+                function formatAgentResponse(data) {
+                    let content = data.message || '';
+                    
+                    if (data.summary) {
+                        content += '\n\n' + data.summary.join('\n');
+                    }
+                    
+                    if (data.nextSteps) {
+                        content += '\n\n**Next Steps:**\n' + data.nextSteps.map(s => `• ${s}`).join('\n');
+                    }
+                    
+                    return content;
                 }
 
                 // Send message
@@ -767,35 +793,17 @@
                     scrollToBottom();
 
                     try {
-                        // Send to L1_ORCH through the hub
-                        const response = await fetch(`${apiUrl}/messages`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                from: 'user',
-                                to: 'L1_ORCH',
-                                type: 'build_request',
-                                content
-                            })
-                        });
-
-                        if (!response.ok) throw new Error('Failed to send message');
-
-                        // Simulate L1_ORCH thinking (will be replaced by real response)
-                        setTimeout(() => {
-                            isTyping.value = false;
-                            messages.value.push({
-                                id: `msg-${++messageId}`,
-                                type: 'message-orch',
-                                content: `I understand you want to build: "${content}"\n\nLet me analyze your requirements and create an APML specification for this app. I'll coordinate with specialized agents to handle:\n\n• Frontend development\n• Backend APIs\n• Database design\n• Authentication\n• Deployment\n\nStarting the build process now...`,
-                                timestamp: new Date().toISOString()
-                            });
-                            sending.value = false;
-                            scrollToBottom();
-
-                            // Show build status
-                            showBuildStatus();
-                        }, 2000);
+                        // Send via WebSocket to protoADE
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({
+                                type: 'user_request',
+                                userId: sessionId,
+                                request: content,
+                                sessionId: sessionId
+                            }));
+                        } else {
+                            throw new Error('Not connected to ADE Hub');
+                        }
 
                     } catch (error) {
                         console.error('Failed to send message:', error);
