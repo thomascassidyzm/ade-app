@@ -184,14 +184,15 @@ function broadcastToAgents(message) {
   });
 }
 
-// Import existing API routes
-const vfsRouter = require('./api/vfs');
-const messagesRouter = require('./api/messages');
-const agentsRouter = require('./api/agents');
+// Import existing API routes - commented out for now due to ES module conflicts
+// TODO: Convert API routes to CommonJS or use dynamic imports
+// const vfsRouter = require('./api/vfs');
+// const messagesRouter = require('./api/messages');
+// const agentsRouter = require('./api/agents');
 
-app.use('/api/vfs', vfsRouter);
-app.use('/api/messages', messagesRouter);
-app.use('/api/agents', agentsRouter);
+// app.use('/api/vfs', vfsRouter);
+// app.use('/api/messages', messagesRouter);
+// app.use('/api/agents', agentsRouter);
 
 console.log('ADE WebSocket Hub ready for Railway deployment!');
 console.log('WebSocket endpoint: ws://localhost:3000 (wss:// in production)');
