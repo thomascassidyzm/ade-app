@@ -1,0 +1,22 @@
+{
+  "name": "claude-multi-agent-system",
+  "version": "1.0.0",
+  "description": "Multi-agent coordination system for Claude agents using MCP",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "test": "node test-agent.js",
+    "start": "node websocket-server.js",
+    "railway": "node websocket-server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.2",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.16.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "vercel": "^32.5.0"
+  }
+}

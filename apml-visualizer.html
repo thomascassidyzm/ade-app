@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APML Visualizer</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #11111a;
+            --accent: #00d4ff;
+            --accent-l2: #7c3aed;
+            --accent-l3: #10b981;
+            --text: #ffffff;
+            --text-secondary: #a1a1aa;
+            --border: #1a1a26;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+        }
+
+        .visualizer-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .controls {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .control-button {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .control-button:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .control-button.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .visualization {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(0, 212, 255, 0.02) 0%, transparent 50%);
+        }
+
+        #network {
+            width: 100%;
+            height: 100%;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(17, 17, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+
+        .info-panel.hidden {
+            transform: translateX(320px);
+        }
+
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .info-title {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .close-info {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.25rem;
+        }
+
+        .info-content {
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .info-section {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-section:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            color: var(--text);
+        }
+
+        .message-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .flow-item {
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(17, 17, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .stats-panel {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(17, 17, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            color: var(--accent);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="visualizer-container">
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <span class="control-label">View:</span>
+                <button :class="['control-button', { active: viewMode === 'hierarchy' }]" @click="viewMode = 'hierarchy'">
+                    Hierarchy
+                </button>
+                <button :class="['control-button', { active: viewMode === 'flow' }]" @click="viewMode = 'flow'">
+                    Message Flow
+                </button>
+                <button :class="['control-button', { active: viewMode === 'timeline' }]" @click="viewMode = 'timeline'">
+                    Timeline
+                </button>
+            </div>
+            
+            <div class="control-group">
+                <span class="control-label">Filter:</span>
+                <button :class="['control-button', { active: filterLayer === 'all' }]" @click="filterLayer = 'all'">
+                    All Layers
+                </button>
+                <button :class="['control-button', { active: filterLayer === 'L1' }]" @click="filterLayer = 'L1'">
+                    L1
+                </button>
+                <button :class="['control-button', { active: filterLayer === 'L2' }]" @click="filterLayer = 'L2'">
+                    L2
+                </button>
+                <button :class="['control-button', { active: filterLayer === 'L3' }]" @click="filterLayer = 'L3'">
+                    L3
+                </button>
+            </div>
+
+            <div class="control-group" style="margin-left: auto;">
+                <button class="control-button" @click="resetView">Reset View</button>
+                <button class="control-button" @click="exportAPML">Export APML</button>
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="visualization">
+            <div id="network"></div>
+
+            <!-- Stats Panel -->
+            <div class="stats-panel">
+                <div class="stat-item">
+                    <span class="stat-label">Agents:</span>
+                    <span class="stat-value">{{ agentCount }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Messages:</span>
+                    <span class="stat-value">{{ messageCount }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Active Tasks:</span>
+                    <span class="stat-value">{{ activeTaskCount }}</span>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00d4ff;"></div>
+                    <span>L1 - Orchestration</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #7c3aed;"></div>
+                    <span>L2 - Coordination</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #10b981;"></div>
+                    <span>L3 - Execution</span>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div :class="['info-panel', { hidden: !selectedNode }]">
+                <div class="info-header">
+                    <h3 class="info-title">{{ selectedNode?.label || 'Agent Details' }}</h3>
+                    <button @click="selectedNode = null" class="close-info">×</button>
+                </div>
+                <div class="info-content" v-if="selectedNode">
+                    <div class="info-section">
+                        <div class="info-label">Layer</div>
+                        <div class="info-value">{{ selectedNode.layer }}</div>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Role</div>
+                        <div class="info-value">{{ selectedNode.role }}</div>
+                    </div>
+                    <div class="info-section">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">{{ selectedNode.status || 'Active' }}</div>
+                    </div>
+                    <div class="info-section" v-if="selectedNode.messages">
+                        <div class="info-label">Recent Messages</div>
+                        <div class="message-flow">
+                            <div v-for="msg in selectedNode.messages" :key="msg.id" class="flow-item">
+                                <strong>{{ msg.type }}:</strong> {{ msg.summary }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch } = Vue;
+
+        createApp({
+            setup() {
+                // State
+                const viewMode = ref('hierarchy');
+                const filterLayer = ref('all');
+                const selectedNode = ref(null);
+                let network = null;
+                let nodes = null;
+                let edges = null;
+
+                // Sample APML data
+                const apmlData = {
+                    agents: [
+                        { id: 'l1-orch', label: 'L1_ORCH', layer: 'L1', role: 'Orchestrator', x: 0, y: 0 },
+                        { id: 'l2-frontend', label: 'L2_Frontend', layer: 'L2', role: 'UI Coordinator', x: -200, y: 150 },
+                        { id: 'l2-backend', label: 'L2_Backend', layer: 'L2', role: 'API Coordinator', x: 0, y: 150 },
+                        { id: 'l2-data', label: 'L2_Data', layer: 'L2', role: 'Data Coordinator', x: 200, y: 150 },
+                        { id: 'l3-vue', label: 'L3_Vue', layer: 'L3', role: 'Vue Developer', x: -300, y: 300 },
+                        { id: 'l3-css', label: 'L3_CSS', layer: 'L3', role: 'Style Engineer', x: -100, y: 300 },
+                        { id: 'l3-api', label: 'L3_API', layer: 'L3', role: 'API Builder', x: 100, y: 300 },
+                        { id: 'l3-db', label: 'L3_Database', layer: 'L3', role: 'DB Engineer', x: 300, y: 300 }
+                    ],
+                    messages: [
+                        { from: 'l1-orch', to: 'l2-frontend', type: 'brief', summary: 'Create user dashboard' },
+                        { from: 'l1-orch', to: 'l2-backend', type: 'brief', summary: 'Setup authentication API' },
+                        { from: 'l1-orch', to: 'l2-data', type: 'brief', summary: 'Design user data model' },
+                        { from: 'l2-frontend', to: 'l3-vue', type: 'task', summary: 'Build Dashboard.vue' },
+                        { from: 'l2-frontend', to: 'l3-css', type: 'task', summary: 'Create responsive styles' },
+                        { from: 'l2-backend', to: 'l3-api', type: 'task', summary: 'Implement auth endpoints' },
+                        { from: 'l2-data', to: 'l3-db', type: 'task', summary: 'Create user schema' }
+                    ]
+                };
+
+                // Computed
+                const agentCount = computed(() => apmlData.agents.length);
+                const messageCount = computed(() => apmlData.messages.length);
+                const activeTaskCount = computed(() => apmlData.messages.filter(m => m.type === 'task').length);
+
+                // Initialize network
+                function initNetwork() {
+                    const container = document.getElementById('network');
+                    
+                    // Create nodes
+                    nodes = new vis.DataSet(
+                        apmlData.agents.map(agent => ({
+                            id: agent.id,
+                            label: agent.label,
+                            ...getNodeStyle(agent.layer),
+                            x: agent.x,
+                            y: agent.y,
+                            layer: agent.layer,
+                            role: agent.role,
+                            messages: apmlData.messages.filter(m => m.from === agent.id || m.to === agent.id)
+                        }))
+                    );
+
+                    // Create edges
+                    edges = new vis.DataSet(
+                        apmlData.messages.map((msg, idx) => ({
+                            id: `edge-${idx}`,
+                            from: msg.from,
+                            to: msg.to,
+                            label: msg.type,
+                            ...getEdgeStyle(msg.type)
+                        }))
+                    );
+
+                    const data = { nodes, edges };
+
+                    const options = {
+                        physics: {
+                            enabled: true,
+                            solver: 'hierarchicalRepulsion',
+                            hierarchicalRepulsion: {
+                                nodeDistance: 150,
+                                springLength: 100
+                            }
+                        },
+                        layout: viewMode.value === 'hierarchy' ? {
+                            hierarchical: {
+                                enabled: true,
+                                direction: 'UD',
+                                sortMethod: 'directed',
+                                levelSeparation: 150
+                            }
+                        } : {},
+                        nodes: {
+                            font: {
+                                color: '#ffffff',
+                                size: 14
+                            }
+                        },
+                        edges: {
+                            font: {
+                                color: '#a1a1aa',
+                                size: 12
+                            }
+                        },
+                        interaction: {
+                            hover: true,
+                            tooltipDelay: 0
+                        }
+                    };
+
+                    network = new vis.Network(container, data, options);
+
+                    // Handle node selection
+                    network.on('selectNode', (params) => {
+                        if (params.nodes.length > 0) {
+                            const nodeId = params.nodes[0];
+                            selectedNode.value = nodes.get(nodeId);
+                        }
+                    });
+
+                    // Handle click on empty space
+                    network.on('click', (params) => {
+                        if (params.nodes.length === 0) {
+                            selectedNode.value = null;
+                        }
+                    });
+                }
+
+                // Get node style based on layer
+                function getNodeStyle(layer) {
+                    const styles = {
+                        L1: {
+                            color: {
+                                background: '#00d4ff',
+                                border: '#0095c0',
+                                highlight: { background: '#00e5ff', border: '#00a5d0' }
+                            },
+                            shape: 'hexagon',
+                            size: 35
+                        },
+                        L2: {
+                            color: {
+                                background: '#7c3aed',
+                                border: '#6c2ed3',
+                                highlight: { background: '#8c4afd', border: '#7c3aed' }
+                            },
+                            shape: 'box',
+                            size: 30
+                        },
+                        L3: {
+                            color: {
+                                background: '#10b981',
+                                border: '#0ea571',
+                                highlight: { background: '#20c991', border: '#10b981' }
+                            },
+                            shape: 'circle',
+                            size: 25
+                        }
+                    };
+                    return styles[layer] || styles.L3;
+                }
+
+                // Get edge style based on message type
+                function getEdgeStyle(type) {
+                    const styles = {
+                        brief: {
+                            arrows: 'to',
+                            color: { color: '#00d4ff', highlight: '#00e5ff' },
+                            width: 2,
+                            smooth: { type: 'curvedCW', roundness: 0.2 }
+                        },
+                        task: {
+                            arrows: 'to',
+                            color: { color: '#7c3aed', highlight: '#8c4afd' },
+                            width: 2,
+                            dashes: [5, 5]
+                        },
+                        status: {
+                            arrows: 'from',
+                            color: { color: '#10b981', highlight: '#20c991' },
+                            width: 1
+                        },
+                        result: {
+                            arrows: 'from',
+                            color: { color: '#f59e0b', highlight: '#f5ae1b' },
+                            width: 2
+                        }
+                    };
+                    return styles[type] || styles.brief;
+                }
+
+                // Update visualization based on view mode
+                function updateVisualization() {
+                    if (!network) return;
+
+                    let options = {};
+                    
+                    if (viewMode.value === 'hierarchy') {
+                        options = {
+                            layout: {
+                                hierarchical: {
+                                    enabled: true,
+                                    direction: 'UD',
+                                    sortMethod: 'directed',
+                                    levelSeparation: 150
+                                }
+                            }
+                        };
+                    } else if (viewMode.value === 'flow') {
+                        options = {
+                            layout: {
+                                hierarchical: {
+                                    enabled: true,
+                                    direction: 'LR',
+                                    sortMethod: 'directed',
+                                    levelSeparation: 200
+                                }
+                            }
+                        };
+                    } else {
+                        options = {
+                            layout: {
+                                hierarchical: false
+                            }
+                        };
+                    }
+
+                    network.setOptions(options);
+                }
+
+                // Filter nodes by layer
+                function filterNodes() {
+                    if (!nodes || !edges) return;
+
+                    if (filterLayer.value === 'all') {
+                        nodes.forEach(node => {
+                            nodes.update({ id: node.id, hidden: false });
+                        });
+                        edges.forEach(edge => {
+                            edges.update({ id: edge.id, hidden: false });
+                        });
+                    } else {
+                        nodes.forEach(node => {
+                            const hidden = node.layer !== filterLayer.value;
+                            nodes.update({ id: node.id, hidden });
+                        });
+                        
+                        edges.forEach(edge => {
+                            const fromNode = nodes.get(edge.from);
+                            const toNode = nodes.get(edge.to);
+                            const hidden = fromNode.hidden || toNode.hidden;
+                            edges.update({ id: edge.id, hidden });
+                        });
+                    }
+                }
+
+                // Reset view
+                function resetView() {
+                    if (network) {
+                        network.fit();
+                    }
+                }
+
+                // Export APML
+                function exportAPML() {
+                    const apml = {
+                        version: '1.0',
+                        timestamp: new Date().toISOString(),
+                        agents: apmlData.agents,
+                        messages: apmlData.messages,
+                        visualization: {
+                            layout: viewMode.value,
+                            filter: filterLayer.value
+                        }
+                    };
+
+                    const blob = new Blob([JSON.stringify(apml, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'app-specification.apml.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+
+                // Watch for changes
+                watch(viewMode, updateVisualization);
+                watch(filterLayer, filterNodes);
+
+                // Initialize
+                onMounted(() => {
+                    initNetwork();
+                });
+
+                return {
+                    viewMode,
+                    filterLayer,
+                    selectedNode,
+                    agentCount,
+                    messageCount,
+                    activeTaskCount,
+                    resetView,
+                    exportAPML
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

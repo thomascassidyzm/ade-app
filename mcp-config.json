@@ -1,0 +1,80 @@
+{
+  "name": "multi-agent-coordinator",
+  "version": "1.0.0",
+  "description": "MCP server for multi-agent coordination",
+  "tools": [
+    {
+      "name": "send_message",
+      "description": "Send a message to another agent or broadcast to all",
+      "parameters": {
+        "to": {
+          "type": "string",
+          "description": "Target agent ID (leave empty for broadcast)"
+        },
+        "content": {
+          "type": "string",
+          "description": "Message content"
+        },
+        "type": {
+          "type": "string",
+          "description": "Message type",
+          "default": "text"
+        }
+      }
+    },
+    {
+      "name": "share_file",
+      "description": "Share a file with other agents",
+      "parameters": {
+        "filename": {
+          "type": "string",
+          "description": "Name of the file"
+        },
+        "content": {
+          "type": "string",
+          "description": "File content"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional metadata"
+        }
+      }
+    },
+    {
+      "name": "create_task",
+      "description": "Create a task for coordination",
+      "parameters": {
+        "type": {
+          "type": "string",
+          "description": "Task type (should match agent capabilities)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Task description"
+        },
+        "priority": {
+          "type": "string",
+          "description": "Task priority",
+          "enum": ["low", "normal", "high"],
+          "default": "normal"
+        }
+      }
+    },
+    {
+      "name": "list_agents",
+      "description": "Get list of connected agents",
+      "parameters": {}
+    },
+    {
+      "name": "get_messages",
+      "description": "Retrieve recent messages",
+      "parameters": {
+        "limit": {
+          "type": "number",
+          "description": "Number of messages to retrieve",
+          "default": 50
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADE Multi-Agent Hub - Complete Dashboard</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a26;
+            --accent: #00d4ff;
+            --accent-secondary: #7c3aed;
+            --text: #ffffff;
+            --text-secondary: #a1a1aa;
+            --border: #2a2a3a;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .status {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .status-item {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        .error {
+            background: var(--error);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            background: var(--success);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: var(--accent);
+        }
+
+        .agent-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .agent-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .agent-name {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .agent-capabilities {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .message-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message-form input,
+        .message-form select,
+        .message-form textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .message-form button,
+        button {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .messages {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .message-header {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+        }
+
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: var(--accent-secondary);
+            margin-bottom: 4px;
+        }
+
+        .file-meta {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .file-actions button {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
+        .file-upload {
+            background: rgba(124, 58, 237, 0.1);
+            border: 2px dashed var(--accent-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--accent-secondary);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .file-upload-label:hover {
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+
+        .debug-info {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid rgba(255, 255, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background: var(--bg-secondary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+
+        .tab-button.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <h1>ADE Multi-Agent Hub - Complete Dashboard</h1>
+        
+        <div v-if="error" class="error">
+            Error: {{ error }}
+        </div>
+        
+        <div v-if="successMessage" class="success">
+            {{ successMessage }}
+        </div>
+        
+        <div class="status">
+            <div class="status-item">
+                <strong>API URL:</strong> {{ apiUrl }}
+            </div>
+            <div class="status-item">
+                <strong>Status:</strong> {{ connected ? 'Connected' : 'Disconnected' }}
+            </div>
+            <div class="status-item">
+                <strong>Agents:</strong> {{ agents.length }}
+            </div>
+            <div class="status-item">
+                <strong>Messages:</strong> {{ messages.length }}
+            </div>
+            <div class="status-item">
+                <strong>Files:</strong> {{ files.length }}
+            </div>
+        </div>
+
+        <div class="tab-buttons">
+            <button class="tab-button" :class="{active: activeTab === 'agents'}" @click="activeTab = 'agents'">
+                Agents & Messages
+            </button>
+            <button class="tab-button" :class="{active: activeTab === 'files'}" @click="activeTab = 'files'">
+                Files ({{ files.length }})
+            </button>
+        </div>
+
+        <div v-if="activeTab === 'agents'">
+            <div class="grid">
+                <div class="section">
+                    <h2>Connected Agents</h2>
+                    <div v-if="loading" class="loading">Loading agents...</div>
+                    <div v-else-if="agents.length === 0" class="loading">No agents connected</div>
+                    <div v-else class="agent-list">
+                        <div v-for="agent in agents" :key="agent.id" class="agent-item">
+                            <div class="agent-name">{{ agent.name }}</div>
+                            <div class="agent-capabilities">
+                                ID: {{ agent.id }}<br>
+                                Capabilities: {{ formatCapabilities(agent.capabilities) }}
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="loadAgents" style="margin-top: 10px;">Refresh Agents</button>
+                </div>
+
+                <div class="section">
+                    <h2>Send Message</h2>
+                    <form @submit.prevent="sendMessage" class="message-form">
+                        <select v-model="messageTarget">
+                            <option value="">Broadcast to all agents</option>
+                            <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+                                {{ agent.name }} ({{ agent.id }})
+                            </option>
+                        </select>
+                        
+                        <input v-model="messageType" placeholder="Message type (default: text)" />
+                        
+                        <textarea 
+                            v-model="messageContent" 
+                            placeholder="Enter your message here..."
+                            rows="3"
+                            required
+                        ></textarea>
+                        
+                        <button type="submit" :disabled="sending || !messageContent.trim()">
+                            {{ sending ? 'Sending...' : 'Send Message' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Recent Messages</h2>
+                <button @click="loadMessages" style="margin-bottom: 10px;">Refresh Messages</button>
+                <div v-if="messages.length === 0" class="loading">No messages yet</div>
+                <div v-else class="messages">
+                    <div v-for="message in messages" :key="message.id" class="message">
+                        <div class="message-header">
+                            <strong>{{ message.from }}</strong> → 
+                            {{ message.to || 'All Agents' }} | 
+                            {{ formatTime(message.timestamp) }}
+                        </div>
+                        <div class="message-content">{{ message.content }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="activeTab === 'files'">
+            <div class="section">
+                <h2>File Management</h2>
+                
+                <div class="file-upload">
+                    <input 
+                        type="file" 
+                        id="fileInput" 
+                        @change="handleFileSelect"
+                        :disabled="uploading"
+                    />
+                    <label for="fileInput" class="file-upload-label">
+                        {{ uploading ? 'Uploading...' : 'Choose File to Upload' }}
+                    </label>
+                    <div v-if="selectedFile" style="margin-top: 10px;">
+                        Selected: {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+                        <button @click="uploadFile" :disabled="uploading" style="margin-left: 10px;">
+                            Upload
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <button @click="loadFiles">Refresh Files</button>
+                </div>
+
+                <div v-if="files.length === 0" class="loading">No files uploaded yet</div>
+                <div v-else class="file-list">
+                    <div v-for="file in files" :key="file.id" class="file-item">
+                        <div class="file-info">
+                            <div class="file-name">{{ file.filename }}</div>
+                            <div class="file-meta">
+                                Agent: {{ getAgentName(file.agentId) }}<br>
+                                Uploaded: {{ formatTime(file.createdAt) }}
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button @click="viewFile(file)">View</button>
+                            <button @click="downloadFile(file)">Download</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                // State
+                const agents = ref([]);
+                const messages = ref([]);
+                const files = ref([]);
+                const messageContent = ref('');
+                const messageTarget = ref('');
+                const messageType = ref('');
+                const connected = ref(false);
+                const loading = ref(false);
+                const sending = ref(false);
+                const uploading = ref(false);
+                const error = ref('');
+                const successMessage = ref('');
+                const activeTab = ref('agents');
+                const selectedFile = ref(null);
+                
+                // Compute API URL
+                const apiUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3000/api' 
+                    : '/api';
+                
+                // Format capabilities
+                function formatCapabilities(capabilities) {
+                    if (typeof capabilities === 'string') {
+                        try {
+                            capabilities = JSON.parse(capabilities);
+                        } catch (e) {
+                            return capabilities;
+                        }
+                    }
+                    if (Array.isArray(capabilities)) {
+                        return capabilities.join(', ');
+                    }
+                    return 'None';
+                }
+                
+                // Format timestamp
+                function formatTime(timestamp) {
+                    return new Date(timestamp).toLocaleString();
+                }
+                
+                // Format file size
+                function formatFileSize(bytes) {
+                    if (bytes < 1024) return bytes + ' B';
+                    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                }
+                
+                // Get agent name by ID
+                function getAgentName(agentId) {
+                    const agent = agents.value.find(a => a.id === agentId);
+                    return agent ? agent.name : agentId;
+                }
+                
+                // Clear messages
+                function clearMessages() {
+                    setTimeout(() => {
+                        error.value = '';
+                        successMessage.value = '';
+                    }, 5000);
+                }
+                
+                // Load agents
+                async function loadAgents() {
+                    loading.value = true;
+                    error.value = '';
+                    try {
+                        const response = await fetch(`${apiUrl}/agents`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        const data = await response.json();
+                        agents.value = data.agents || [];
+                        connected.value = true;
+                    } catch (err) {
+                        error.value = `Failed to load agents: ${err.message}`;
+                        connected.value = false;
+                        clearMessages();
+                    } finally {
+                        loading.value = false;
+                    }
+                }
+                
+                // Load messages
+                async function loadMessages() {
+                    error.value = '';
+                    try {
+                        const response = await fetch(`${apiUrl}/messages?limit=50`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        const data = await response.json();
+                        messages.value = data.messages || [];
+                    } catch (err) {
+                        error.value = `Failed to load messages: ${err.message}`;
+                        clearMessages();
+                    }
+                }
+                
+                // Load files
+                async function loadFiles() {
+                    error.value = '';
+                    try {
+                        const response = await fetch(`${apiUrl}/files?limit=50`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        const data = await response.json();
+                        files.value = data.files || [];
+                    } catch (err) {
+                        error.value = `Failed to load files: ${err.message}`;
+                        clearMessages();
+                    }
+                }
+                
+                // Send message
+                async function sendMessage() {
+                    if (!messageContent.value.trim()) return;
+                    
+                    sending.value = true;
+                    error.value = '';
+                    successMessage.value = '';
+                    
+                    const payload = {
+                        from: 'coordinator',
+                        to: messageTarget.value || null,
+                        type: messageType.value || 'text',
+                        content: messageContent.value
+                    };
+                    
+                    try {
+                        const response = await fetch(`${apiUrl}/messages`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const responseData = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(responseData.error || `HTTP ${response.status}`);
+                        }
+                        
+                        successMessage.value = `Message sent successfully! ID: ${responseData.messageId}`;
+                        messageContent.value = '';
+                        messageType.value = '';
+                        clearMessages();
+                        
+                        // Reload messages
+                        await loadMessages();
+                    } catch (err) {
+                        error.value = `Failed to send message: ${err.message}`;
+                        clearMessages();
+                    } finally {
+                        sending.value = false;
+                    }
+                }
+                
+                // Handle file selection
+                function handleFileSelect(event) {
+                    selectedFile.value = event.target.files[0];
+                }
+                
+                // Upload file
+                async function uploadFile() {
+                    if (!selectedFile.value) return;
+                    
+                    uploading.value = true;
+                    error.value = '';
+                    successMessage.value = '';
+                    
+                    try {
+                        // Read file content
+                        const reader = new FileReader();
+                        const fileContent = await new Promise((resolve, reject) => {
+                            reader.onload = e => resolve(e.target.result);
+                            reader.onerror = reject;
+                            reader.readAsText(selectedFile.value);
+                        });
+                        
+                        const payload = {
+                            agentId: 'coordinator',
+                            filename: selectedFile.value.name,
+                            content: fileContent,
+                            metadata: {
+                                contentType: selectedFile.value.type || 'text/plain',
+                                size: selectedFile.value.size
+                            }
+                        };
+                        
+                        const response = await fetch(`${apiUrl}/files`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const responseData = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(responseData.error || `HTTP ${response.status}`);
+                        }
+                        
+                        successMessage.value = `File uploaded successfully! ID: ${responseData.fileId}`;
+                        selectedFile.value = null;
+                        document.getElementById('fileInput').value = '';
+                        clearMessages();
+                        
+                        // Reload files
+                        await loadFiles();
+                    } catch (err) {
+                        error.value = `Failed to upload file: ${err.message}`;
+                        clearMessages();
+                    } finally {
+                        uploading.value = false;
+                    }
+                }
+                
+                // View file
+                function viewFile(file) {
+                    if (file.url) {
+                        window.open(file.url, '_blank');
+                    }
+                }
+                
+                // Download file
+                function downloadFile(file) {
+                    if (file.url) {
+                        const a = document.createElement('a');
+                        a.href = file.url;
+                        a.download = file.filename;
+                        a.click();
+                    }
+                }
+                
+                // Auto-refresh
+                onMounted(() => {
+                    loadAgents();
+                    loadMessages();
+                    loadFiles();
+                    
+                    // Refresh every 5 seconds
+                    setInterval(() => {
+                        loadAgents();
+                        loadMessages();
+                        loadFiles();
+                    }, 5000);
+                });
+                
+                return {
+                    agents,
+                    messages,
+                    files,
+                    messageContent,
+                    messageTarget,
+                    messageType,
+                    connected,
+                    loading,
+                    sending,
+                    uploading,
+                    error,
+                    successMessage,
+                    activeTab,
+                    selectedFile,
+                    apiUrl,
+                    formatCapabilities,
+                    formatTime,
+                    formatFileSize,
+                    getAgentName,
+                    loadAgents,
+                    loadMessages,
+                    loadFiles,
+                    sendMessage,
+                    handleFileSelect,
+                    uploadFile,
+                    viewFile,
+                    downloadFile
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

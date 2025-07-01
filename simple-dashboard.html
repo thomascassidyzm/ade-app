@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADE Multi-Agent Hub - Simple Dashboard</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a26;
+            --accent: #00d4ff;
+            --text: #ffffff;
+            --text-secondary: #a1a1aa;
+            --border: #2a2a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .status {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .status-item {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .section h2 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .agent-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .agent-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .agent-name {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .agent-capabilities {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .message-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message-form input,
+        .message-form select,
+        .message-form textarea {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .message-form button {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .message-form button:hover {
+            opacity: 0.9;
+        }
+
+        .message-form button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .messages {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .message-header {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+
+        .debug-info {
+            background: rgba(255, 255, 0, 0.1);
+            border: 1px solid rgba(255, 255, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <h1>ADE Multi-Agent Hub - Simple Dashboard</h1>
+        
+        <div v-if="error" class="error">
+            Error: {{ error }}
+        </div>
+        
+        <div v-if="successMessage" class="success">
+            {{ successMessage }}
+        </div>
+        
+        <div class="status">
+            <div class="status-item">
+                <strong>API URL:</strong> {{ apiUrl }}
+            </div>
+            <div class="status-item">
+                <strong>Status:</strong> {{ connected ? 'Connected' : 'Disconnected' }}
+            </div>
+            <div class="status-item">
+                <strong>Agents:</strong> {{ agents.length }}
+            </div>
+            <div class="status-item">
+                <strong>Messages:</strong> {{ messages.length }}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Connected Agents</h2>
+            <div v-if="loading" class="loading">Loading agents...</div>
+            <div v-else-if="agents.length === 0" class="loading">No agents connected</div>
+            <div v-else class="agent-list">
+                <div v-for="agent in agents" :key="agent.id" class="agent-item">
+                    <div class="agent-name">{{ agent.name }}</div>
+                    <div class="agent-capabilities">
+                        ID: {{ agent.id }}<br>
+                        Capabilities: {{ formatCapabilities(agent.capabilities) }}
+                    </div>
+                </div>
+            </div>
+            <button @click="loadAgents" style="margin-top: 10px;">Refresh Agents</button>
+        </div>
+
+        <div class="section">
+            <h2>Send Message</h2>
+            <form @submit.prevent="sendMessage" class="message-form">
+                <select v-model="messageTarget">
+                    <option value="">Broadcast to all agents</option>
+                    <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+                        {{ agent.name }} ({{ agent.id }})
+                    </option>
+                </select>
+                
+                <input v-model="messageType" placeholder="Message type (default: text)" />
+                
+                <textarea 
+                    v-model="messageContent" 
+                    placeholder="Enter your message here..."
+                    rows="3"
+                    required
+                ></textarea>
+                
+                <button type="submit" :disabled="sending || !messageContent.trim()">
+                    {{ sending ? 'Sending...' : 'Send Message' }}
+                </button>
+            </form>
+            
+            <div v-if="debugInfo" class="debug-info">
+                <strong>Debug Info:</strong><br>
+                {{ debugInfo }}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Recent Messages</h2>
+            <button @click="loadMessages" style="margin-bottom: 10px;">Refresh Messages</button>
+            <div v-if="messages.length === 0" class="loading">No messages yet</div>
+            <div v-else class="messages">
+                <div v-for="message in messages" :key="message.id" class="message">
+                    <div class="message-header">
+                        <strong>{{ message.from }}</strong> → 
+                        {{ message.to || 'All Agents' }} | 
+                        {{ formatTime(message.timestamp) }}
+                    </div>
+                    <div class="message-content">{{ message.content }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                // State
+                const agents = ref([]);
+                const messages = ref([]);
+                const messageContent = ref('');
+                const messageTarget = ref('');
+                const messageType = ref('');
+                const connected = ref(false);
+                const loading = ref(false);
+                const sending = ref(false);
+                const error = ref('');
+                const successMessage = ref('');
+                const debugInfo = ref('');
+                
+                // Compute API URL
+                const apiUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3000/api' 
+                    : '/api';
+                
+                // Format capabilities
+                function formatCapabilities(capabilities) {
+                    if (typeof capabilities === 'string') {
+                        try {
+                            capabilities = JSON.parse(capabilities);
+                        } catch (e) {
+                            return capabilities;
+                        }
+                    }
+                    if (Array.isArray(capabilities)) {
+                        return capabilities.join(', ');
+                    }
+                    return 'None';
+                }
+                
+                // Format timestamp
+                function formatTime(timestamp) {
+                    return new Date(timestamp).toLocaleString();
+                }
+                
+                // Clear messages
+                function clearMessages() {
+                    setTimeout(() => {
+                        error.value = '';
+                        successMessage.value = '';
+                    }, 5000);
+                }
+                
+                // Load agents
+                async function loadAgents() {
+                    loading.value = true;
+                    error.value = '';
+                    try {
+                        const response = await fetch(`${apiUrl}/agents`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        const data = await response.json();
+                        agents.value = data.agents || [];
+                        connected.value = true;
+                    } catch (err) {
+                        error.value = `Failed to load agents: ${err.message}`;
+                        connected.value = false;
+                        clearMessages();
+                    } finally {
+                        loading.value = false;
+                    }
+                }
+                
+                // Load messages
+                async function loadMessages() {
+                    error.value = '';
+                    try {
+                        const response = await fetch(`${apiUrl}/messages?limit=50`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        const data = await response.json();
+                        messages.value = data.messages || [];
+                    } catch (err) {
+                        error.value = `Failed to load messages: ${err.message}`;
+                        clearMessages();
+                    }
+                }
+                
+                // Send message
+                async function sendMessage() {
+                    if (!messageContent.value.trim()) return;
+                    
+                    sending.value = true;
+                    error.value = '';
+                    successMessage.value = '';
+                    
+                    const payload = {
+                        from: 'coordinator',
+                        to: messageTarget.value || null,
+                        type: messageType.value || 'text',
+                        content: messageContent.value
+                    };
+                    
+                    debugInfo.value = `Sending to ${apiUrl}/messages:\n${JSON.stringify(payload, null, 2)}`;
+                    
+                    try {
+                        const response = await fetch(`${apiUrl}/messages`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const responseData = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(responseData.error || `HTTP ${response.status}`);
+                        }
+                        
+                        successMessage.value = `Message sent successfully! ID: ${responseData.messageId}`;
+                        messageContent.value = '';
+                        messageType.value = '';
+                        debugInfo.value = '';
+                        clearMessages();
+                        
+                        // Reload messages
+                        await loadMessages();
+                    } catch (err) {
+                        error.value = `Failed to send message: ${err.message}`;
+                        clearMessages();
+                    } finally {
+                        sending.value = false;
+                    }
+                }
+                
+                // Auto-refresh
+                onMounted(() => {
+                    loadAgents();
+                    loadMessages();
+                    
+                    // Refresh every 5 seconds
+                    setInterval(() => {
+                        loadAgents();
+                        loadMessages();
+                    }, 5000);
+                });
+                
+                return {
+                    agents,
+                    messages,
+                    messageContent,
+                    messageTarget,
+                    messageType,
+                    connected,
+                    loading,
+                    sending,
+                    error,
+                    successMessage,
+                    debugInfo,
+                    apiUrl,
+                    formatCapabilities,
+                    formatTime,
+                    loadAgents,
+                    loadMessages,
+                    sendMessage
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
