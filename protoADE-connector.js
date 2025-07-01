@@ -46,13 +46,23 @@ class ProtoADEConnector {
     });
 
     this.ws.on('error', (error) => {
-      console.error('❌ WebSocket error:', error);
+      console.error('❌ WebSocket error:', error.message);
     });
 
-    this.ws.on('close', () => {
-      console.log('🔌 Disconnected from ADE Hub');
+    this.ws.on('close', (code, reason) => {
+      console.log(`🔌 Disconnected from ADE Hub (code: ${code}, reason: ${reason})`);
+      console.log('🔄 Reconnecting in 5 seconds...');
       // Reconnect after 5 seconds
       setTimeout(() => this.connect(), 5000);
+    });
+    
+    // Ping every 30 seconds to keep connection alive
+    this.ws.on('open', () => {
+      setInterval(() => {
+        if (this.ws.readyState === WebSocket.OPEN) {
+          this.ws.ping();
+        }
+      }, 30000);
     });
   }
 
