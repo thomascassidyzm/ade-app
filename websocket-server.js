@@ -8,8 +8,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Serve the L1_ORCH interface
+// Serve the home page
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index-home.html'));
+});
+
+// Serve the L1_ORCH chat interface
+app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'l1-orch-interface.html'));
 });
 
