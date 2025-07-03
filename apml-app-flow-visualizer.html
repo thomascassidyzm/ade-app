@@ -36,7 +36,7 @@
 
         .visualizer-container {
             display: grid;
-            grid-template-columns: 300px 1fr 350px;
+            grid-template-columns: 1fr 1fr 1fr;
             height: 100vh;
             gap: 1px;
             background: var(--border);
@@ -58,61 +58,56 @@
             align-items: center;
             justify-content: space-between;
         }
-
-        /* Left Panel - App Structure */
-        .app-structure {
-            padding: 1rem;
+        
+        .panel-content {
+            flex: 1;
             overflow-y: auto;
+            padding: 1rem;
         }
 
-        .structure-section {
-            margin-bottom: 2rem;
-        }
-
-        .section-title {
-            color: var(--accent);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.75rem;
+        /* Left Panel - Mobile Preview */
+        .mobile-preview {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            background: #0a0a0a;
+            padding: 2rem;
+        }
+        
+        .phone-frame {
+            width: 375px;
+            height: 667px;
+            background: #fff;
+            border-radius: 36px;
+            box-shadow: 0 0 60px rgba(0, 255, 136, 0.2);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #222;
+        }
+        
+        .phone-screen-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
         }
 
-        .screen-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        .design-mode-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            background: rgba(0, 255, 136, 0.05);
         }
 
-        .screen-item {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .screen-item:hover {
-            border-color: var(--accent-screen);
-            transform: translateX(4px);
-        }
-
-        .screen-item.active {
-            border-color: var(--accent-screen);
+        .selected-component-highlight {
+            position: absolute;
+            border: 2px solid var(--accent-screen);
             background: rgba(0, 255, 136, 0.1);
-        }
-
-        .screen-name {
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-        }
-
-        .screen-components {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
+            pointer-events: none;
+            transition: all 0.3s ease;
         }
 
         /* Center Panel - Flow Visualization */
@@ -159,10 +154,104 @@
             border-color: var(--accent);
         }
 
-        /* Right Panel - Details */
-        .details-panel {
-            padding: 1rem;
+        /* Right Panel - Split View */
+        .right-panel {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+        }
+        
+        .overview-section {
+            background: var(--bg-secondary);
             overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .chat-section {
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .chat-message.user {
+            background: #00ff88;
+            color: #0a0a0a;
+            margin-left: auto;
+        }
+        
+        .chat-message.assistant {
+            background: #0a0a0a;
+            border: 1px solid #333;
+        }
+        
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .chat-input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+        
+        .screen-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .screen-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .screen-item:hover {
+            border-color: var(--accent-screen);
+            transform: translateX(4px);
+        }
+
+        .screen-item.active {
+            border-color: var(--accent-screen);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .screen-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .screen-components {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
         }
 
         .detail-section {
@@ -306,45 +395,22 @@
 <body>
     <div id="app">
         <div class="visualizer-container">
-            <!-- Left Panel: App Structure -->
+            <!-- Left Panel: Mobile Preview -->
             <div class="panel">
                 <div class="panel-header">
-                    <span>App Structure</span>
-                    <span class="screen-count">{{ screens.length }} screens</span>
+                    <span>App Preview</span>
+                    <button class="control-btn" @click="refreshPreview">Refresh</button>
                 </div>
-                <div class="app-structure">
-                    <!-- Screens -->
-                    <div class="structure-section">
-                        <div class="section-title">
-                            <span>📱</span>
-                            <span>Screens</span>
-                        </div>
-                        <div class="screen-list">
-                            <div v-for="screen in screens" 
-                                 :key="screen.id"
-                                 class="screen-item"
-                                 :class="{ active: selectedScreen === screen.id }"
-                                 @click="selectScreen(screen.id)">
-                                <div class="screen-name">{{ formatScreenName(screen.id) }}</div>
-                                <div class="screen-components">
-                                    {{ screen.components?.length || 0 }} components
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Data Models -->
-                    <div class="structure-section" v-if="dataModels.length > 0">
-                        <div class="section-title">
-                            <span>💾</span>
-                            <span>Data Models</span>
-                        </div>
-                        <div class="data-model-list">
-                            <div v-for="model in dataModels" :key="model.name" class="data-model">
-                                <div class="model-name">{{ model.name }}</div>
-                                <div class="model-fields">{{ model.fieldCount }} fields</div>
-                            </div>
-                        </div>
+                <div class="panel-content mobile-preview">
+                    <div class="phone-frame">
+                        <iframe 
+                            ref="previewFrame"
+                            class="phone-screen-iframe"
+                            :srcdoc="previewHTML"
+                            sandbox="allow-scripts allow-forms"
+                            @load="onPreviewLoad"
+                        ></iframe>
+                        <div class="design-mode-overlay" v-if="designMode"></div>
                     </div>
                 </div>
             </div>
@@ -380,48 +446,70 @@
                 </div>
             </div>
 
-            <!-- Right Panel: Details -->
+            <!-- Right Panel: Overview + Chat -->
             <div class="panel">
-                <div class="panel-header">
-                    <span>Details</span>
-                </div>
-                <div class="details-panel">
-                    <div v-if="selectedScreen">
-                        <!-- Screen Details -->
-                        <div class="detail-section">
-                            <div class="detail-title">{{ formatScreenName(selectedScreen) }}</div>
-                            
-                            <!-- Component Tree -->
-                            <div class="component-tree" v-if="selectedScreenData">
-                                <div v-for="component in selectedScreenData.components" 
-                                     :key="component.id"
-                                     class="component-node">
-                                    <span class="component-type">{{ component.type }}</span>
-                                    <div class="component-props" v-if="component.props">
-                                        {{ formatProps(component.props) }}
+                <div class="right-panel">
+                    <!-- Top: Overview -->
+                    <div class="overview-section">
+                        <div class="panel-header">
+                            <span>App Overview</span>
+                        </div>
+                        <div class="panel-content">
+                            <!-- Screen List -->
+                            <div class="detail-section">
+                                <div class="detail-title">Screens ({{ screens.length }})</div>
+                                <div class="screen-list">
+                                    <div v-for="screen in screens" 
+                                         :key="screen.id"
+                                         class="screen-item"
+                                         :class="{ active: selectedScreen === screen.id }"
+                                         @click="selectScreen(screen.id)">
+                                        <div class="screen-name">{{ formatScreenName(screen.id) }}</div>
+                                        <div class="screen-components">
+                                            {{ screen.components?.length || 0 }} components
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Selected Screen Details -->
+                            <div v-if="selectedScreen" class="detail-section">
+                                <div class="detail-title">{{ formatScreenName(selectedScreen) }}</div>
+                                <div class="component-tree" v-if="selectedScreenData">
+                                    <div v-for="component in selectedScreenData.components" 
+                                         :key="component.id"
+                                         class="component-node">
+                                        <span class="component-type">{{ component.type }}</span>
+                                        <div class="component-props" v-if="component.props">
+                                            {{ formatProps(component.props) }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Navigation Flow -->
-                        <div class="detail-section" v-if="selectedScreenNavigation">
-                            <div class="detail-title">Navigation</div>
-                            <div class="navigation-flow">
-                                <div v-for="(target, action) in selectedScreenNavigation" 
-                                     :key="action"
-                                     class="nav-item">
-                                    <span>{{ action }}</span>
-                                    <span class="nav-arrow">→</span>
-                                    <span>{{ formatScreenName(target) }}</span>
-                                </div>
+                    </div>
+                    
+                    <!-- Bottom: Chat -->
+                    <div class="chat-section">
+                        <div class="panel-header">
+                            <span>Feedback to L1_ORCH</span>
+                        </div>
+                        <div class="chat-messages" ref="chatMessages">
+                            <div v-for="msg in conversation" 
+                                 :key="msg.id" 
+                                 :class="['chat-message', msg.role]">
+                                {{ msg.content }}
                             </div>
                         </div>
-                    </div>
-
-                    <div v-else class="empty-state">
-                        <div class="empty-state-icon">👆</div>
-                        <p>Select a screen to view details</p>
+                        <div class="chat-input-container">
+                            <textarea 
+                                v-model="userInput"
+                                @keydown.enter.prevent="sendFeedback"
+                                class="chat-input"
+                                placeholder="Describe changes you'd like..."
+                                rows="2"
+                            ></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -440,11 +528,22 @@
                 const navigation = ref({});
                 const selectedScreen = ref(null);
                 const viewMode = ref('flow');
+                const designMode = ref(true);
+                const previewHTML = ref('<h1 style="text-align:center; padding:2rem;">Loading preview...</h1>');
+                const conversation = ref([
+                    {
+                        id: 1,
+                        role: 'assistant',
+                        content: 'I see your app structure. What changes would you like to make?'
+                    }
+                ]);
+                const userInput = ref('');
                 
                 let network = null;
                 let nodes = null;
                 let edges = null;
                 let visualizer = null;
+                let previewCompiler = null;
 
                 // Load APML from VFS or sample data
                 async function loadAPML() {
@@ -543,6 +642,9 @@
 
                     // Initialize network visualization
                     initNetwork(visualization);
+                    
+                    // Update preview
+                    refreshPreview();
                 }
 
                 // Initialize network
@@ -678,9 +780,76 @@
                         .join(', ');
                 }
 
+                // Preview methods
+                function refreshPreview() {
+                    if (previewCompiler && apmlMessages.value.length > 0) {
+                        const spec = {
+                            project: { name: 'App Preview' },
+                            screens: screens.value,
+                            navigation: navigation.value
+                        };
+                        
+                        try {
+                            const result = previewCompiler.compileToLiveApp(spec);
+                            previewHTML.value = result.fullApp;
+                        } catch (error) {
+                            console.error('Preview compilation error:', error);
+                            previewHTML.value = '<div style="padding:2rem; color:red;">Error generating preview</div>';
+                        }
+                    }
+                }
+
+                function onPreviewLoad() {
+                    console.log('Preview loaded');
+                }
+
+                // Chat methods
+                async function sendFeedback() {
+                    if (!userInput.value.trim()) return;
+                    
+                    // Add user message
+                    conversation.value.push({
+                        id: Date.now(),
+                        role: 'user',
+                        content: userInput.value
+                    });
+                    
+                    // Clear input
+                    const feedback = userInput.value;
+                    userInput.value = '';
+                    
+                    // Send to VFS for L1_ORCH to see
+                    // In real implementation, this would go through WebSocket
+                    console.log('Feedback sent:', feedback);
+                    
+                    // Simulate response
+                    setTimeout(() => {
+                        conversation.value.push({
+                            id: Date.now() + 1,
+                            role: 'assistant',
+                            content: 'I understand. Let me update the design based on your feedback...'
+                        });
+                    }, 1000);
+                    
+                    // Scroll to bottom
+                    Vue.nextTick(() => {
+                        const chatEl = document.querySelector('.chat-messages');
+                        if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+                    });
+                }
+
+                // Initialize preview compiler
+                function initPreviewCompiler() {
+                    if (typeof APMLToLivePreview !== 'undefined') {
+                        previewCompiler = new APMLToLivePreview();
+                        refreshPreview();
+                    }
+                }
+
                 // Lifecycle
                 onMounted(() => {
                     loadAPML();
+                    initPreviewCompiler();
                 });
 
                 return {
@@ -691,10 +860,17 @@
                     selectedScreenData,
                     selectedScreenNavigation,
                     viewMode,
+                    designMode,
+                    previewHTML,
+                    conversation,
+                    userInput,
                     selectScreen,
                     resetView,
                     formatScreenName,
-                    formatProps
+                    formatProps,
+                    refreshPreview,
+                    onPreviewLoad,
+                    sendFeedback
                 };
             }
         }).mount('#app');
