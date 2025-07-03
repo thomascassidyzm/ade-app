@@ -18,6 +18,10 @@ app.get('/nav-component.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'nav-component.js'));
 });
 
+app.get('/apml-to-live-preview.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'apml-to-live-preview.js'));
+});
+
 // Serve the home page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index-home.html'));
