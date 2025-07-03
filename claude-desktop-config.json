@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "ade-webapp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-axios",
+        "http://localhost:3000/mcp"
+      ],
+      "env": {
+        "ADE_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}

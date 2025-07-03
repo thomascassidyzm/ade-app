@@ -10,7 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Serve shared navigation files
+// Serve shared files
+app.get('/ade-design-system.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'ade-design-system.css'));
+});
+
 app.get('/shared-nav-styles.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'shared-nav-styles.css'));
 });
@@ -27,9 +31,9 @@ app.get('/apml-app-visualizer.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'apml-app-visualizer.js'));
 });
 
-// Serve the home page
+// Serve the SPA as home page
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index-home.html'));
+  res.sendFile(path.join(__dirname, 'index-spa.html'));
 });
 
 // Serve the L1_ORCH chat interface
@@ -56,8 +60,114 @@ app.get('/cost-calculator', (req, res) => {
   res.sendFile(path.join(__dirname, 'api-cost-calculator.html'));
 });
 
+// MCP endpoint for Claude Desktop
+app.post('/mcp', express.json(), async (req, res) => {
+  // Check API key in production
+  if (process.env.NODE_ENV === 'production' || process.env.MCP_API_KEY) {
+    const apiKey = req.headers.authorization?.replace('Bearer ', '');
+    if (apiKey !== process.env.MCP_API_KEY) {
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'Invalid or missing API key'
+      });
+    }
+  }
+  
+  try {
+    const { method, params, id, jsonrpc } = req.body;
+    
+    // Basic MCP protocol handling
+    let result;
+    switch (method) {
+      case 'initialize':
+        result = {
+          protocolVersion: '2024-11-05',
+          capabilities: {
+            tools: {},
+            resources: {}
+          },
+          serverInfo: {
+            name: 'ade-webapp',
+            version: '1.0.0'
+          }
+        };
+        break;
+        
+      case 'tools/list':
+        result = {
+          tools: [
+            {
+              name: 'search_apml_patterns',
+              description: 'Search APML pattern library',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  query: { type: 'string' }
+                },
+                required: ['query']
+              }
+            },
+            {
+              name: 'create_app_spec',
+              description: 'Create app specification from description',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  description: { type: 'string' }
+                },
+                required: ['description']
+              }
+            }
+          ]
+        };
+        break;
+        
+      case 'tools/call':
+        // Simple mock responses for now
+        if (params.name === 'search_apml_patterns') {
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify([
+                { id: 'auth-basic', name: 'Basic Authentication', category: 'auth' },
+                { id: 'dashboard-layout', name: 'Dashboard Layout', category: 'layout' }
+              ], null, 2)
+            }]
+          };
+        } else if (params.name === 'create_app_spec') {
+          result = {
+            content: [{
+              type: 'text',
+              text: 'App specification created for: ' + params.arguments.description
+            }]
+          };
+        }
+        break;
+        
+      default:
+        throw new Error(`Unknown method: ${method}`);
+    }
+    
+    res.json({
+      jsonrpc: jsonrpc || '2.0',
+      id,
+      result
+    });
+  } catch (error) {
+    res.json({
+      jsonrpc: '2.0',
+      id: req.body.id,
+      error: {
+        code: -32603,
+        message: error.message
+      }
+    });
+  }
+});
+
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log(`Server running on port ${process.env.PORT || 3000}`);
+  console.log(`MCP endpoint available at http://localhost:${process.env.PORT || 3000}/mcp`);
 });
 
 // WebSocket server
