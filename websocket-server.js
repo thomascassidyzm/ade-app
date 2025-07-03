@@ -8,7 +8,12 @@ const VFSStorageHandler = require('./vfs-storage-handler');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+// Don't serve static files from root - we handle routes explicitly
+
+// Health check for Railway
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Serve shared files
 app.get('/ade-design-system.css', (req, res) => {
