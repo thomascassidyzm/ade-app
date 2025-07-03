@@ -2,13 +2,13 @@
   "name": "claude-multi-agent-system",
   "version": "1.0.0",
   "description": "Multi-agent coordination system for Claude agents using MCP",
-  "main": "app.js",
+  "main": "websocket-server.js",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "node app.js",
-    "start": "node app.js",
+    "start": "node websocket-server.js",
+    "dev": "node websocket-server.js",
     "test": "node test-agent.js"
   },
   "dependencies": {
