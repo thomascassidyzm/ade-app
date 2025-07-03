@@ -2,6 +2,10 @@
 
 // MCP Bridge - Connects Claude Desktop to ADE WebApp
 // This runs locally and bridges stdio (Claude Desktop) to HTTP (WebApp)
+//
+// Usage: Set these environment variables:
+//   ADE_URL=https://ade-app.up.railway.app
+//   ADE_API_KEY=your-secret-key
 
 const readline = require('readline');
 const axios = require('axios');
@@ -25,6 +29,7 @@ function log(...args) {
 }
 
 log(`Starting MCP bridge to ${ADE_URL}`);
+log(`API Key configured: ${API_KEY ? 'Yes' : 'No'}`);
 
 // Handle incoming messages from Claude Desktop
 rl.on('line', async (line) => {
