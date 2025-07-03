@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APML App Flow Visualizer</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    <script src="/nav-component.js"></script>
+    <script src="/apml-app-visualizer.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #11111a;
+            --accent: #00d4ff;
+            --accent-screen: #00ff88;
+            --accent-data: #7c3aed;
+            --accent-component: #ff6b6b;
+            --text: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border: #1a1a26;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .visualizer-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Left Panel - App Structure */
+        .app-structure {
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .structure-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: var(--accent);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .screen-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .screen-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .screen-item:hover {
+            border-color: var(--accent-screen);
+            transform: translateX(4px);
+        }
+
+        .screen-item.active {
+            border-color: var(--accent-screen);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .screen-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .screen-components {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Center Panel - Flow Visualization */
+        .flow-canvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+        }
+
+        #app-flow-network {
+            width: 100%;
+            height: 100%;
+        }
+
+        .visualization-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .control-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .control-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        /* Right Panel - Details */
+        .details-panel {
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .detail-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--accent);
+        }
+
+        .component-tree {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .component-node {
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .component-node::before {
+            content: '├─';
+            position: absolute;
+            left: 0;
+            color: var(--text-secondary);
+        }
+
+        .component-type {
+            color: var(--accent-component);
+            font-weight: 500;
+        }
+
+        .component-props {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-left: 1rem;
+        }
+
+        .navigation-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .nav-arrow {
+            color: var(--accent-screen);
+        }
+
+        .data-model-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .data-model {
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid var(--accent-data);
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+
+        .model-name {
+            color: var(--accent-data);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .model-fields {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="visualizer-container">
+            <!-- Left Panel: App Structure -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>App Structure</span>
+                    <span class="screen-count">{{ screens.length }} screens</span>
+                </div>
+                <div class="app-structure">
+                    <!-- Screens -->
+                    <div class="structure-section">
+                        <div class="section-title">
+                            <span>📱</span>
+                            <span>Screens</span>
+                        </div>
+                        <div class="screen-list">
+                            <div v-for="screen in screens" 
+                                 :key="screen.id"
+                                 class="screen-item"
+                                 :class="{ active: selectedScreen === screen.id }"
+                                 @click="selectScreen(screen.id)">
+                                <div class="screen-name">{{ formatScreenName(screen.id) }}</div>
+                                <div class="screen-components">
+                                    {{ screen.components?.length || 0 }} components
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Models -->
+                    <div class="structure-section" v-if="dataModels.length > 0">
+                        <div class="section-title">
+                            <span>💾</span>
+                            <span>Data Models</span>
+                        </div>
+                        <div class="data-model-list">
+                            <div v-for="model in dataModels" :key="model.name" class="data-model">
+                                <div class="model-name">{{ model.name }}</div>
+                                <div class="model-fields">{{ model.fieldCount }} fields</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Flow Visualization -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>App Flow Visualization</span>
+                    <div class="visualization-controls">
+                        <button class="control-btn" :class="{ active: viewMode === 'flow' }" 
+                                @click="viewMode = 'flow'">Flow</button>
+                        <button class="control-btn" :class="{ active: viewMode === 'hierarchy' }" 
+                                @click="viewMode = 'hierarchy'">Hierarchy</button>
+                        <button class="control-btn" @click="resetView">Reset</button>
+                    </div>
+                </div>
+                <div class="flow-canvas">
+                    <div id="app-flow-network"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #00ff88"></div>
+                            <span>Screen</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #00d4ff"></div>
+                            <span>Navigation</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #7c3aed"></div>
+                            <span>Data Model</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Details -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Details</span>
+                </div>
+                <div class="details-panel">
+                    <div v-if="selectedScreen">
+                        <!-- Screen Details -->
+                        <div class="detail-section">
+                            <div class="detail-title">{{ formatScreenName(selectedScreen) }}</div>
+                            
+                            <!-- Component Tree -->
+                            <div class="component-tree" v-if="selectedScreenData">
+                                <div v-for="component in selectedScreenData.components" 
+                                     :key="component.id"
+                                     class="component-node">
+                                    <span class="component-type">{{ component.type }}</span>
+                                    <div class="component-props" v-if="component.props">
+                                        {{ formatProps(component.props) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Flow -->
+                        <div class="detail-section" v-if="selectedScreenNavigation">
+                            <div class="detail-title">Navigation</div>
+                            <div class="navigation-flow">
+                                <div v-for="(target, action) in selectedScreenNavigation" 
+                                     :key="action"
+                                     class="nav-item">
+                                    <span>{{ action }}</span>
+                                    <span class="nav-arrow">→</span>
+                                    <span>{{ formatScreenName(target) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="empty-state">
+                        <div class="empty-state-icon">👆</div>
+                        <p>Select a screen to view details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch } = Vue;
+
+        createApp({
+            setup() {
+                // State
+                const apmlMessages = ref([]);
+                const screens = ref([]);
+                const dataModels = ref([]);
+                const navigation = ref({});
+                const selectedScreen = ref(null);
+                const viewMode = ref('flow');
+                
+                let network = null;
+                let nodes = null;
+                let edges = null;
+                let visualizer = null;
+
+                // Load APML from VFS or sample data
+                async function loadAPML() {
+                    // In real usage, this would load from VFS
+                    // For now, use sample APML
+                    const sampleAPML = [
+                        {
+                            type: 'handoff',
+                            package: {
+                                LoginScreen: {
+                                    layout: 'vertical',
+                                    components: [
+                                        { id: 'header', type: 'Header', props: { title: 'Welcome' } },
+                                        { id: 'email', type: 'TextInput', props: { placeholder: 'Email' } },
+                                        { id: 'password', type: 'TextInput', props: { placeholder: 'Password', type: 'password' } },
+                                        { id: 'login-btn', type: 'Button', props: { text: 'Sign In', action: 'authenticate' } }
+                                    ],
+                                    navigation: {
+                                        success: 'HomeScreen',
+                                        signup: 'SignupScreen'
+                                    }
+                                },
+                                HomeScreen: {
+                                    layout: 'vertical',
+                                    components: [
+                                        { id: 'header', type: 'Header', props: { title: 'Dashboard' } },
+                                        { id: 'tasks', type: 'List', props: { data: '${tasks}' } }
+                                    ],
+                                    navigation: {
+                                        profile: 'ProfileScreen',
+                                        logout: 'LoginScreen'
+                                    }
+                                },
+                                data_models: {
+                                    User: {
+                                        fields: {
+                                            id: 'uuid',
+                                            email: 'string',
+                                            name: 'string'
+                                        }
+                                    },
+                                    Task: {
+                                        fields: {
+                                            id: 'uuid',
+                                            user_id: 'foreign:User',
+                                            title: 'string',
+                                            completed: 'boolean'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ];
+
+                    processAPML(sampleAPML);
+                }
+
+                // Process APML messages
+                function processAPML(messages) {
+                    apmlMessages.value = messages;
+                    
+                    if (!visualizer) {
+                        visualizer = new APMLAppVisualizer();
+                    }
+
+                    const visualization = visualizer.visualizeFromAPML(messages);
+                    
+                    // Extract screens
+                    screens.value = visualization.nodes
+                        .filter(n => n.type === 'screen')
+                        .map(n => ({
+                            id: n.id,
+                            components: n.data.components || []
+                        }));
+
+                    // Extract data models
+                    dataModels.value = visualization.nodes
+                        .filter(n => n.type === 'dataModel')
+                        .map(n => ({
+                            name: n.label,
+                            fieldCount: Object.keys(n.data.fields || {}).length
+                        }));
+
+                    // Build navigation map
+                    const navMap = {};
+                    messages.forEach(msg => {
+                        if (msg.package) {
+                            Object.entries(msg.package).forEach(([screen, data]) => {
+                                if (data.navigation) {
+                                    navMap[screen] = data.navigation;
+                                }
+                            });
+                        }
+                    });
+                    navigation.value = navMap;
+
+                    // Initialize network visualization
+                    initNetwork(visualization);
+                }
+
+                // Initialize network
+                function initNetwork(visualization) {
+                    const container = document.getElementById('app-flow-network');
+                    
+                    nodes = new vis.DataSet(visualization.nodes);
+                    edges = new vis.DataSet(visualization.edges);
+
+                    const data = { nodes, edges };
+
+                    const options = {
+                        physics: {
+                            enabled: true,
+                            solver: 'forceAtlas2Based',
+                            forceAtlas2Based: {
+                                gravitationalConstant: -50,
+                                centralGravity: 0.01,
+                                springLength: 200,
+                                springConstant: 0.08
+                            }
+                        },
+                        layout: {
+                            improvedLayout: true,
+                            hierarchical: viewMode.value === 'hierarchy' ? {
+                                enabled: true,
+                                direction: 'LR',
+                                sortMethod: 'directed',
+                                nodeSpacing: 200,
+                                levelSeparation: 300
+                            } : false
+                        },
+                        interaction: {
+                            hover: true,
+                            tooltipDelay: 200
+                        },
+                        nodes: {
+                            shape: 'box',
+                            font: {
+                                color: '#ffffff',
+                                size: 14
+                            }
+                        },
+                        edges: {
+                            font: {
+                                size: 12,
+                                align: 'middle'
+                            },
+                            arrows: {
+                                to: {
+                                    enabled: true,
+                                    scaleFactor: 0.8
+                                }
+                            }
+                        }
+                    };
+
+                    network = new vis.Network(container, data, options);
+
+                    // Handle node selection
+                    network.on('selectNode', (params) => {
+                        if (params.nodes.length > 0) {
+                            const nodeId = params.nodes[0];
+                            if (nodeId.startsWith('data-')) return;
+                            selectedScreen.value = nodeId;
+                        }
+                    });
+
+                    // Handle hover
+                    network.on('hoverNode', (params) => {
+                        container.style.cursor = 'pointer';
+                    });
+
+                    network.on('blurNode', () => {
+                        container.style.cursor = 'default';
+                    });
+                }
+
+                // Watch view mode changes
+                watch(viewMode, (newMode) => {
+                    if (network) {
+                        network.setOptions({
+                            layout: {
+                                hierarchical: newMode === 'hierarchy' ? {
+                                    enabled: true,
+                                    direction: 'LR',
+                                    sortMethod: 'directed',
+                                    nodeSpacing: 200,
+                                    levelSeparation: 300
+                                } : false
+                            }
+                        });
+                    }
+                });
+
+                // Computed
+                const selectedScreenData = computed(() => {
+                    return screens.value.find(s => s.id === selectedScreen.value);
+                });
+
+                const selectedScreenNavigation = computed(() => {
+                    return navigation.value[selectedScreen.value] || null;
+                });
+
+                // Methods
+                function selectScreen(screenId) {
+                    selectedScreen.value = screenId;
+                    if (network) {
+                        network.selectNodes([screenId]);
+                        network.focus(screenId, {
+                            scale: 1.2,
+                            animation: true
+                        });
+                    }
+                }
+
+                function resetView() {
+                    if (network) {
+                        network.fit({
+                            animation: true
+                        });
+                    }
+                }
+
+                function formatScreenName(screenId) {
+                    if (!screenId) return '';
+                    return screenId.replace('Screen', '').replace(/([A-Z])/g, ' $1').trim();
+                }
+
+                function formatProps(props) {
+                    return Object.entries(props)
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join(', ');
+                }
+
+                // Lifecycle
+                onMounted(() => {
+                    loadAPML();
+                });
+
+                return {
+                    screens,
+                    dataModels,
+                    navigation,
+                    selectedScreen,
+                    selectedScreenData,
+                    selectedScreenNavigation,
+                    viewMode,
+                    selectScreen,
+                    resetView,
+                    formatScreenName,
+                    formatProps
+                };
+            }
+        }).mount('#app');
+
+        // Add navigation
+        createADENav('visualizer');
+    </script>
+</body>
+</html>

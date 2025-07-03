@@ -23,6 +23,10 @@ app.get('/apml-to-live-preview.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'apml-to-live-preview.js'));
 });
 
+app.get('/apml-app-visualizer.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'apml-app-visualizer.js'));
+});
+
 // Serve the home page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index-home.html'));
@@ -35,7 +39,7 @@ app.get('/chat', (req, res) => {
 
 // Serve other interfaces
 app.get('/visualizer', (req, res) => {
-  res.sendFile(path.join(__dirname, 'apml-visualizer.html'));
+  res.sendFile(path.join(__dirname, 'apml-app-flow-visualizer.html'));
 });
 
 app.get('/dashboard', (req, res) => {
