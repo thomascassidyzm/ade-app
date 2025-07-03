@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const DeploymentWebSocketHandler = require('./deployment-websocket-handler');
+const VFSStorageHandler = require('./vfs-storage-handler');
 
 const app = express();
 app.use(cors());
@@ -61,9 +62,27 @@ const wss = new WebSocket.Server({ server });
 // Initialize deployment handler
 const deploymentHandler = new DeploymentWebSocketHandler(wss);
 
+// Initialize VFS storage handler
+const vfsHandler = new VFSStorageHandler('./vfs-storage');
+
 // Connected clients
 const clients = new Map();
 const agents = new Map();
+
+// Listen for VFS updates to broadcast
+vfsHandler.on('vfs_update', (update) => {
+  broadcast({
+    type: 'vfs_update',
+    ...update
+  });
+});
+
+vfsHandler.on('vfs_error', (error) => {
+  broadcast({
+    type: 'vfs_error',
+    ...error
+  });
+});
 
 wss.on('connection', (ws, req) => {
   const clientId = Math.random().toString(36).substring(7);
@@ -183,11 +202,7 @@ function handleMessage(clientId, message) {
       
     case 'vfs_operation':
       // Virtual file system operations
-      broadcastToAgents({
-        type: 'vfs_update',
-        operation: message.operation,
-        data: message.data
-      });
+      handleVFSOperation(clientId, message.operation);
       break;
   }
 }
@@ -221,6 +236,34 @@ function broadcastToAgents(message) {
       agent.ws.send(data);
     }
   });
+}
+
+async function handleVFSOperation(clientId, operation) {
+  try {
+    const result = await vfsHandler.handleVFSOperation(operation);
+    
+    // Send success response to client
+    const client = clients.get(clientId);
+    if (client) {
+      client.ws.send(JSON.stringify({
+        type: 'vfs_response',
+        requestId: operation.requestId,
+        result,
+        success: true
+      }));
+    }
+  } catch (error) {
+    // Send error response to client
+    const client = clients.get(clientId);
+    if (client) {
+      client.ws.send(JSON.stringify({
+        type: 'vfs_response',
+        requestId: operation.requestId,
+        error: error.message,
+        success: false
+      }));
+    }
+  }
 }
 
 // Import existing API routes - commented out for now due to ES module conflicts
