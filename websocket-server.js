@@ -33,6 +33,11 @@ app.get('/builder', (req, res) => {
   res.sendFile(path.join(__dirname, 'ade-builder-interface.html'));
 });
 
+// Serve the Cost Calculator
+app.get('/cost-calculator', (req, res) => {
+  res.sendFile(path.join(__dirname, 'api-cost-calculator.html'));
+});
+
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log(`Server running on port ${process.env.PORT || 3000}`);
 });
