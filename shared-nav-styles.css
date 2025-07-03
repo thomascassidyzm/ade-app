@@ -1,0 +1,106 @@
+/* Shared Navigation Styles for ADE */
+.ade-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #333;
+    z-index: 1000;
+    padding: 0.75rem 1.5rem;
+}
+
+.ade-nav-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ade-nav-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00ff88, #0088ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: none;
+    margin-right: 2rem;
+}
+
+.ade-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.ade-nav-link {
+    color: #888;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ade-nav-link:hover {
+    color: #fff;
+}
+
+.ade-nav-link.active {
+    color: #00ff88;
+}
+
+.ade-nav-icon {
+    font-size: 1.125rem;
+}
+
+.ade-nav-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.ade-nav-status-dot {
+    width: 6px;
+    height: 6px;
+    background: #00ff88;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .ade-nav-links {
+        gap: 1rem;
+    }
+    
+    .ade-nav-link span {
+        display: none;
+    }
+    
+    .ade-nav-icon {
+        font-size: 1.25rem;
+    }
+    
+    .ade-nav-status {
+        display: none;
+    }
+}
+
+/* Adjust main content for fixed nav */
+.with-nav {
+    padding-top: 60px;
+}

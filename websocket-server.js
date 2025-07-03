@@ -9,6 +9,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Serve shared navigation files
+app.get('/shared-nav-styles.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'shared-nav-styles.css'));
+});
+
+app.get('/nav-component.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'nav-component.js'));
+});
+
 // Serve the home page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index-home.html'));
