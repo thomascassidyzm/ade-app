@@ -132,6 +132,11 @@ function createADENavigation() {
           color: var(--text-primary);
           min-height: 100vh;
         }
+        
+        /* Hide any old navigation components */
+        nav-component {
+          display: none !important;
+        }
       </style>
     `;
     document.head.insertAdjacentHTML('beforeend', styles);
