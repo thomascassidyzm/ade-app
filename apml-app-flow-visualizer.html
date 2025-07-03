@@ -110,17 +110,87 @@
             transition: all 0.3s ease;
         }
 
-        /* Center Panel - Flow Visualization */
-        .flow-canvas {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-primary);
+        /* Center Panel - Message Protocols */
+        .message-protocols {
+            padding: 1rem;
+            overflow-y: auto;
         }
 
-        #app-flow-network {
-            width: 100%;
-            height: 100%;
+        .protocol-section {
+            margin-bottom: 2rem;
+        }
+
+        .protocol-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .protocol-icon {
+            font-size: 1.5rem;
+        }
+
+        .message-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .protocol-message {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .protocol-message:hover {
+            transform: translateX(4px);
+        }
+
+        .protocol-message.app-user {
+            border-left: 3px solid #00ff88;
+        }
+
+        .protocol-message.user-app {
+            border-left: 3px solid #00d4ff;
+        }
+
+        .protocol-message.app-app {
+            border-left: 3px solid #7c3aed;
+        }
+
+        .message-source {
+            font-weight: 600;
+            min-width: 100px;
+            color: var(--text-secondary);
+        }
+
+        .message-arrow {
+            color: var(--accent);
+            font-size: 1.25rem;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-type {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .message-details {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
         .visualization-controls {
@@ -415,32 +485,73 @@
                 </div>
             </div>
 
-            <!-- Center Panel: Flow Visualization -->
+            <!-- Center Panel: Message Protocols -->
             <div class="panel">
                 <div class="panel-header">
-                    <span>App Flow Visualization</span>
+                    <span>Message Protocols</span>
                     <div class="visualization-controls">
-                        <button class="control-btn" :class="{ active: viewMode === 'flow' }" 
-                                @click="viewMode = 'flow'">Flow</button>
-                        <button class="control-btn" :class="{ active: viewMode === 'hierarchy' }" 
-                                @click="viewMode = 'hierarchy'">Hierarchy</button>
-                        <button class="control-btn" @click="resetView">Reset</button>
+                        <button class="control-btn" :class="{ active: protocolView === 'all' }" 
+                                @click="protocolView = 'all'">All</button>
+                        <button class="control-btn" :class="{ active: protocolView === 'app-user' }" 
+                                @click="protocolView = 'app-user'">App→User</button>
+                        <button class="control-btn" :class="{ active: protocolView === 'user-app' }" 
+                                @click="protocolView = 'user-app'">User→App</button>
+                        <button class="control-btn" :class="{ active: protocolView === 'app-app' }" 
+                                @click="protocolView = 'app-app'">App→App</button>
                     </div>
                 </div>
-                <div class="flow-canvas">
-                    <div id="app-flow-network"></div>
-                    <div class="legend">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #00ff88"></div>
-                            <span>Screen</span>
+                <div class="panel-content message-protocols">
+                    <!-- App to User Messages -->
+                    <div class="protocol-section" v-show="protocolView === 'all' || protocolView === 'app-user'">
+                        <div class="protocol-header">
+                            <span class="protocol-icon">📱→👤</span>
+                            <span>App to User</span>
                         </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #00d4ff"></div>
-                            <span>Navigation</span>
+                        <div class="message-list">
+                            <div v-for="msg in appToUserMessages" :key="msg.id" class="protocol-message app-user">
+                                <div class="message-source">{{ msg.source }}</div>
+                                <div class="message-arrow">→</div>
+                                <div class="message-content">
+                                    <div class="message-type">{{ msg.type }}</div>
+                                    <div class="message-details">{{ msg.content }}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #7c3aed"></div>
-                            <span>Data Model</span>
+                    </div>
+
+                    <!-- User to App Messages -->
+                    <div class="protocol-section" v-show="protocolView === 'all' || protocolView === 'user-app'">
+                        <div class="protocol-header">
+                            <span class="protocol-icon">👤→📱</span>
+                            <span>User to App</span>
+                        </div>
+                        <div class="message-list">
+                            <div v-for="msg in userToAppMessages" :key="msg.id" class="protocol-message user-app">
+                                <div class="message-source">{{ msg.trigger }}</div>
+                                <div class="message-arrow">→</div>
+                                <div class="message-content">
+                                    <div class="message-type">{{ msg.action }}</div>
+                                    <div class="message-details">{{ msg.result }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- App to App Messages -->
+                    <div class="protocol-section" v-show="protocolView === 'all' || protocolView === 'app-app'">
+                        <div class="protocol-header">
+                            <span class="protocol-icon">📱↔️📱</span>
+                            <span>App to App</span>
+                        </div>
+                        <div class="message-list">
+                            <div v-for="msg in appToAppMessages" :key="msg.id" class="protocol-message app-app">
+                                <div class="message-source">{{ msg.source }}</div>
+                                <div class="message-arrow">↔️</div>
+                                <div class="message-content">
+                                    <div class="message-type">{{ msg.type }}</div>
+                                    <div class="message-details">{{ msg.endpoint }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -527,7 +638,7 @@
                 const dataModels = ref([]);
                 const navigation = ref({});
                 const selectedScreen = ref(null);
-                const viewMode = ref('flow');
+                const protocolView = ref('all');
                 const designMode = ref(true);
                 const previewHTML = ref('<h1 style="text-align:center; padding:2rem;">Loading preview...</h1>');
                 const conversation = ref([
@@ -539,9 +650,11 @@
                 ]);
                 const userInput = ref('');
                 
-                let network = null;
-                let nodes = null;
-                let edges = null;
+                // Message protocols
+                const appToUserMessages = ref([]);
+                const userToAppMessages = ref([]);
+                const appToAppMessages = ref([]);
+                
                 let visualizer = null;
                 let previewCompiler = null;
 
@@ -640,105 +753,88 @@
                     });
                     navigation.value = navMap;
 
-                    // Initialize network visualization
-                    initNetwork(visualization);
+                    // Extract message protocols
+                    extractMessageProtocols();
                     
                     // Update preview
                     refreshPreview();
                 }
 
-                // Initialize network
-                function initNetwork(visualization) {
-                    const container = document.getElementById('app-flow-network');
+                // Extract message protocols from APML
+                function extractMessageProtocols() {
+                    // Clear existing
+                    appToUserMessages.value = [];
+                    userToAppMessages.value = [];
+                    appToAppMessages.value = [];
                     
-                    nodes = new vis.DataSet(visualization.nodes);
-                    edges = new vis.DataSet(visualization.edges);
-
-                    const data = { nodes, edges };
-
-                    const options = {
-                        physics: {
-                            enabled: true,
-                            solver: 'forceAtlas2Based',
-                            forceAtlas2Based: {
-                                gravitationalConstant: -50,
-                                centralGravity: 0.01,
-                                springLength: 200,
-                                springConstant: 0.08
+                    // Extract from screens and components
+                    screens.value.forEach(screen => {
+                        screen.components?.forEach(component => {
+                            // App to User messages
+                            if (component.type === 'Text' || component.type === 'Header') {
+                                appToUserMessages.value.push({
+                                    id: `${screen.id}-${component.id}-display`,
+                                    source: screen.id,
+                                    type: 'Display',
+                                    content: component.props?.text || component.props?.title || 'Text content'
+                                });
                             }
-                        },
-                        layout: {
-                            improvedLayout: true,
-                            hierarchical: viewMode.value === 'hierarchy' ? {
-                                enabled: true,
-                                direction: 'LR',
-                                sortMethod: 'directed',
-                                nodeSpacing: 200,
-                                levelSeparation: 300
-                            } : false
-                        },
-                        interaction: {
-                            hover: true,
-                            tooltipDelay: 200
-                        },
-                        nodes: {
-                            shape: 'box',
-                            font: {
-                                color: '#ffffff',
-                                size: 14
+                            
+                            // User to App messages
+                            if (component.type === 'Button') {
+                                userToAppMessages.value.push({
+                                    id: `${screen.id}-${component.id}-click`,
+                                    trigger: `${component.props?.text || 'Button'} click`,
+                                    action: component.props?.action || 'handleClick',
+                                    result: `Navigate to ${navigation.value[screen.id]?.[component.props?.action] || 'next screen'}`
+                                });
                             }
-                        },
-                        edges: {
-                            font: {
-                                size: 12,
-                                align: 'middle'
-                            },
-                            arrows: {
-                                to: {
-                                    enabled: true,
-                                    scaleFactor: 0.8
-                                }
+                            
+                            if (component.type === 'TextInput') {
+                                userToAppMessages.value.push({
+                                    id: `${screen.id}-${component.id}-input`,
+                                    trigger: `${component.props?.placeholder || 'Input'} field`,
+                                    action: 'onTextChange',
+                                    result: `Update ${component.props?.placeholder?.toLowerCase() || 'field'} value`
+                                });
                             }
-                        }
-                    };
-
-                    network = new vis.Network(container, data, options);
-
-                    // Handle node selection
-                    network.on('selectNode', (params) => {
-                        if (params.nodes.length > 0) {
-                            const nodeId = params.nodes[0];
-                            if (nodeId.startsWith('data-')) return;
-                            selectedScreen.value = nodeId;
-                        }
-                    });
-
-                    // Handle hover
-                    network.on('hoverNode', (params) => {
-                        container.style.cursor = 'pointer';
-                    });
-
-                    network.on('blurNode', () => {
-                        container.style.cursor = 'default';
-                    });
-                }
-
-                // Watch view mode changes
-                watch(viewMode, (newMode) => {
-                    if (network) {
-                        network.setOptions({
-                            layout: {
-                                hierarchical: newMode === 'hierarchy' ? {
-                                    enabled: true,
-                                    direction: 'LR',
-                                    sortMethod: 'directed',
-                                    nodeSpacing: 200,
-                                    levelSeparation: 300
-                                } : false
+                            
+                            // App to App messages (data operations)
+                            if (component.props?.data?.includes('${')) {
+                                appToAppMessages.value.push({
+                                    id: `${screen.id}-${component.id}-data`,
+                                    source: screen.id,
+                                    type: 'API Call',
+                                    endpoint: component.props.data.replace('${', '').replace('}', '')
+                                });
                             }
                         });
+                    });
+                    
+                    // Add authentication flow messages
+                    if (screens.value.some(s => s.id.includes('Login'))) {
+                        appToAppMessages.value.push({
+                            id: 'auth-api',
+                            source: 'LoginScreen',
+                            type: 'POST',
+                            endpoint: '/api/auth/login'
+                        });
+                        
+                        appToUserMessages.value.push({
+                            id: 'auth-success',
+                            source: 'Auth Service',
+                            type: 'Success Notification',
+                            content: 'Login successful'
+                        });
+                        
+                        appToUserMessages.value.push({
+                            id: 'auth-error',
+                            source: 'Auth Service',
+                            type: 'Error Alert',
+                            content: 'Invalid credentials'
+                        });
                     }
-                });
+                }
 
                 // Computed
                 const selectedScreenData = computed(() => {
@@ -752,21 +848,6 @@
                 // Methods
                 function selectScreen(screenId) {
                     selectedScreen.value = screenId;
-                    if (network) {
-                        network.selectNodes([screenId]);
-                        network.focus(screenId, {
-                            scale: 1.2,
-                            animation: true
-                        });
-                    }
-                }
-
-                function resetView() {
-                    if (network) {
-                        network.fit({
-                            animation: true
-                        });
-                    }
                 }
 
                 function formatScreenName(screenId) {
@@ -859,13 +940,15 @@
                     selectedScreen,
                     selectedScreenData,
                     selectedScreenNavigation,
-                    viewMode,
+                    protocolView,
+                    appToUserMessages,
+                    userToAppMessages,
+                    appToAppMessages,
                     designMode,
                     previewHTML,
                     conversation,
                     userInput,
                     selectScreen,
-                    resetView,
                     formatScreenName,
                     formatProps,
                     refreshPreview,
