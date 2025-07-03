@@ -1,0 +1,298 @@
+# APML Language Specification v1.0
+
+## Brief: APML Language Definition
+**From**: L1_Documentation
+**To**: L1_ORCH
+**Priority**: Critical
+**Context**: Define APML language for ADE system implementation
+
+### Message Types
+
+#### 1. BRIEF - Project/Task Initialization
+```apml
+{
+  "type": "brief",
+  "id": "brief-001",
+  "from": "L1_ORCH",
+  "to": "L2_AppArchitect",
+  "timestamp": "2025-01-08T10:00:00Z",
+  "project": {
+    "name": "TodoApp",
+    "description": "Task management application",
+    "platform": "mobile-first-web",
+    "requirements": [
+      "User authentication",
+      "Task CRUD operations",
+      "Categories and tags",
+      "Due date reminders"
+    ]
+  },
+  "deliverables": [
+    "Complete APML specification",
+    "UI component definitions",
+    "Data model schema",
+    "API endpoint design"
+  ],
+  "constraints": {
+    "timeline": "48 hours",
+    "budget": "standard",
+    "technology": ["React", "Node.js", "PostgreSQL"]
+  }
+}
+```
+
+#### 2. STATUS - Progress Updates
+```apml
+{
+  "type": "status",
+  "id": "status-001",
+  "from": "L2_AppArchitect",
+  "to": "L1_ORCH",
+  "timestamp": "2025-01-08T11:00:00Z",
+  "brief_ref": "brief-001",
+  "progress": {
+    "percentage": 25,
+    "completed": [
+      "User flow mapping",
+      "Screen definitions"
+    ],
+    "in_progress": [
+      "Component design"
+    ],
+    "blockers": [],
+    "next_steps": [
+      "Define data models",
+      "Create API specifications"
+    ]
+  },
+  "artifacts": {
+    "screens": ["LoginScreen", "TaskListScreen", "TaskDetailScreen"],
+    "components": ["TaskCard", "CategoryFilter", "DatePicker"]
+  }
+}
+```
+
+#### 3. HANDOFF - Work Transfer
+```apml
+{
+  "type": "handoff",
+  "id": "handoff-001",
+  "from": "L2_AppArchitect",
+  "to": "L3_UISpecialist",
+  "timestamp": "2025-01-08T12:00:00Z",
+  "brief_ref": "brief-001",
+  "status_ref": "status-001",
+  "package": {
+    "screens": {
+      "LoginScreen": {
+        "components": [
+          {
+            "id": "email-input",
+            "type": "TextInput",
+            "props": {
+              "placeholder": "Email",
+              "type": "email",
+              "required": true
+            }
+          },
+          {
+            "id": "password-input",
+            "type": "TextInput",
+            "props": {
+              "placeholder": "Password",
+              "type": "password",
+              "required": true
+            }
+          },
+          {
+            "id": "login-button",
+            "type": "Button",
+            "props": {
+              "text": "Sign In",
+              "action": "authenticate",
+              "style": "primary"
+            }
+          }
+        ],
+        "layout": "vertical",
+        "navigation": {
+          "success": "TaskListScreen",
+          "signup": "SignupScreen"
+        }
+      }
+    },
+    "data_models": {
+      "User": {
+        "fields": {
+          "id": "uuid",
+          "email": "string",
+          "password_hash": "string",
+          "created_at": "timestamp"
+        }
+      },
+      "Task": {
+        "fields": {
+          "id": "uuid",
+          "user_id": "uuid",
+          "title": "string",
+          "description": "text",
+          "category": "string",
+          "due_date": "timestamp",
+          "completed": "boolean",
+          "created_at": "timestamp"
+        }
+      }
+    },
+    "api_endpoints": {
+      "auth": {
+        "login": "POST /api/auth/login",
+        "signup": "POST /api/auth/signup",
+        "logout": "POST /api/auth/logout"
+      },
+      "tasks": {
+        "list": "GET /api/tasks",
+        "create": "POST /api/tasks",
+        "update": "PUT /api/tasks/:id",
+        "delete": "DELETE /api/tasks/:id"
+      }
+    }
+  },
+  "instructions": [
+    "Implement responsive design for all screens",
+    "Use consistent color scheme from brand guidelines",
+    "Ensure accessibility standards (WCAG 2.1 AA)",
+    "Optimize for mobile-first experience"
+  ]
+}
+```
+
+## Screen Definition Format
+```apml
+{
+  "screen": {
+    "id": "ScreenName",
+    "type": "functional|navigation|modal",
+    "components": [...],
+    "layout": "vertical|horizontal|grid",
+    "styles": {
+      "background": "#color",
+      "padding": "spacing"
+    },
+    "navigation": {
+      "event": "targetScreen"
+    },
+    "data": {
+      "source": "api|local|props",
+      "endpoint": "/api/path"
+    }
+  }
+}
+```
+
+## Component Definition Format
+```apml
+{
+  "component": {
+    "id": "component-id",
+    "type": "Button|TextInput|List|Card|...",
+    "props": {
+      "text": "string",
+      "placeholder": "string",
+      "action": "functionName",
+      "style": "primary|secondary|danger"
+    },
+    "events": {
+      "onTap": "action",
+      "onChange": "handler"
+    },
+    "validation": {
+      "required": true,
+      "pattern": "regex",
+      "min": 0,
+      "max": 100
+    }
+  }
+}
+```
+
+## Navigation Flow Format
+```apml
+{
+  "navigation": {
+    "initial": "SplashScreen",
+    "routes": {
+      "ScreenName": {
+        "transitions": [
+          {
+            "to": "TargetScreen",
+            "trigger": "event",
+            "condition": "optional-condition",
+            "animation": "slide|fade|none"
+          }
+        ]
+      }
+    },
+    "global": {
+      "tabBar": ["Home", "Search", "Profile"],
+      "drawer": ["Settings", "Help", "Logout"]
+    }
+  }
+}
+```
+
+## Data Model Format
+```apml
+{
+  "model": {
+    "name": "ModelName",
+    "fields": {
+      "fieldName": {
+        "type": "string|number|boolean|uuid|timestamp",
+        "required": true,
+        "unique": false,
+        "default": null,
+        "relations": {
+          "type": "hasOne|hasMany|belongsTo",
+          "model": "RelatedModel",
+          "foreign_key": "field_id"
+        }
+      }
+    },
+    "indexes": ["field1", "field2"],
+    "timestamps": true
+  }
+}
+```
+
+## API Endpoint Format
+```apml
+{
+  "endpoint": {
+    "path": "/api/resource/:id",
+    "method": "GET|POST|PUT|DELETE",
+    "auth": true,
+    "request": {
+      "params": {...},
+      "body": {...},
+      "query": {...}
+    },
+    "response": {
+      "success": {...},
+      "error": {...}
+    },
+    "validation": {
+      "rules": {...}
+    }
+  }
+}
+```
+
+## Handoff: APML Specification Complete
+**From**: L1_Documentation
+**To**: L1_ORCH
+**Status**: Complete
+**Next Steps**: 
+- Implement APML parser
+- Create code generators for each platform
+- Build validation system
+- Test with example applications

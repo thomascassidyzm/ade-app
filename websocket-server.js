@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const DeploymentWebSocketHandler = require('./deployment-websocket-handler');
 
 const app = express();
 app.use(cors());
@@ -27,12 +28,20 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'vfs-enhanced-dashboard.html'));
 });
 
+// Serve the ADE Builder interface
+app.get('/builder', (req, res) => {
+  res.sendFile(path.join(__dirname, 'ade-builder-interface.html'));
+});
+
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log(`Server running on port ${process.env.PORT || 3000}`);
 });
 
 // WebSocket server
 const wss = new WebSocket.Server({ server });
+
+// Initialize deployment handler
+const deploymentHandler = new DeploymentWebSocketHandler(wss);
 
 // Connected clients
 const clients = new Map();
@@ -55,10 +64,17 @@ wss.on('connection', (ws, req) => {
     message: 'Connected to ADE WebSocket Hub'
   }));
   
-  ws.on('message', (data) => {
+  ws.on('message', async (data) => {
     try {
       const message = JSON.parse(data);
-      handleMessage(clientId, message);
+      
+      // Try deployment handler first
+      const handled = await deploymentHandler.handleMessage(ws, data);
+      
+      if (!handled) {
+        // Fall back to regular message handling
+        handleMessage(clientId, message);
+      }
     } catch (error) {
       console.error('Invalid message:', error);
       ws.send(JSON.stringify({

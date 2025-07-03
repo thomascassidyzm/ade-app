@@ -1,0 +1,379 @@
+# Todo App - Complete APML Flow Example
+
+## Brief: Todo App Development
+**From**: User_via_L1_ORCH
+**To**: L2_AppArchitect
+**Timestamp**: 2025-01-08T10:00:00Z
+
+```apml
+{
+  "type": "brief",
+  "id": "todo-brief-001",
+  "from": "L1_ORCH",
+  "to": "L2_AppArchitect",
+  "project": {
+    "name": "SmartTodo",
+    "description": "A smart task management app with categories and reminders",
+    "vision": "Help users organize their life with intelligent task management"
+  },
+  "requirements": {
+    "functional": [
+      "User can create, read, update, delete tasks",
+      "Tasks have title, description, due date, category",
+      "Filter tasks by category, date, completion status",
+      "Push notifications for due tasks",
+      "Offline capability with sync"
+    ],
+    "non_functional": [
+      "Load time < 2 seconds",
+      "Works on mobile and desktop",
+      "Accessible (WCAG 2.1 AA)",
+      "Secure user data"
+    ]
+  }
+}
+```
+
+## Status: Architecture Defined
+**From**: L2_AppArchitect
+**To**: L1_ORCH
+
+```apml
+{
+  "type": "status",
+  "id": "todo-status-001",
+  "brief_ref": "todo-brief-001",
+  "progress": 30,
+  "completed": [
+    "User flow mapping",
+    "Screen architecture",
+    "Data model design"
+  ],
+  "artifacts": {
+    "user_flows": [
+      "Onboarding → Login → Task List → Task Detail",
+      "Task List → Create Task → Task List",
+      "Task Detail → Edit → Task Detail"
+    ],
+    "screens": [
+      "SplashScreen",
+      "LoginScreen", 
+      "SignupScreen",
+      "TaskListScreen",
+      "TaskDetailScreen",
+      "CreateTaskScreen",
+      "CategoryScreen"
+    ]
+  }
+}
+```
+
+## Handoff: UI Implementation
+**From**: L2_AppArchitect
+**To**: L3_UISpecialist
+
+```apml
+{
+  "type": "handoff",
+  "id": "todo-handoff-ui-001",
+  "package": {
+    "TaskListScreen": {
+      "layout": "vertical",
+      "components": [
+        {
+          "id": "header",
+          "type": "Header",
+          "props": {
+            "title": "My Tasks",
+            "actions": [
+              {
+                "icon": "filter",
+                "action": "openFilterModal"
+              },
+              {
+                "icon": "plus",
+                "action": "navigateToCreateTask"
+              }
+            ]
+          }
+        },
+        {
+          "id": "category-tabs",
+          "type": "TabBar",
+          "props": {
+            "tabs": ["All", "Work", "Personal", "Shopping"],
+            "activeTab": "All",
+            "onChange": "filterByCategory"
+          }
+        },
+        {
+          "id": "task-list",
+          "type": "List",
+          "props": {
+            "itemComponent": "TaskCard",
+            "data": "${tasks}",
+            "emptyMessage": "No tasks yet. Create your first task!",
+            "onItemTap": "navigateToTaskDetail"
+          }
+        }
+      ],
+      "data": {
+        "tasks": {
+          "source": "api",
+          "endpoint": "/api/tasks",
+          "filters": {
+            "category": "${selectedCategory}",
+            "completed": false
+          }
+        }
+      }
+    },
+    "TaskCard": {
+      "type": "component",
+      "layout": "horizontal",
+      "props": {
+        "task": "${item}"
+      },
+      "components": [
+        {
+          "id": "checkbox",
+          "type": "Checkbox",
+          "props": {
+            "checked": "${task.completed}",
+            "onChange": "toggleTaskComplete"
+          }
+        },
+        {
+          "id": "content",
+          "type": "Container",
+          "layout": "vertical",
+          "style": { "flex": 1 },
+          "components": [
+            {
+              "id": "title",
+              "type": "Text",
+              "props": {
+                "text": "${task.title}",
+                "style": "heading3"
+              }
+            },
+            {
+              "id": "meta",
+              "type": "Container",
+              "layout": "horizontal",
+              "components": [
+                {
+                  "id": "category",
+                  "type": "Chip",
+                  "props": {
+                    "text": "${task.category}",
+                    "color": "${getCategoryColor(task.category)}"
+                  }
+                },
+                {
+                  "id": "due-date",
+                  "type": "Text",
+                  "props": {
+                    "text": "${formatDate(task.due_date)}",
+                    "style": "caption",
+                    "color": "${isOverdue(task.due_date) ? 'danger' : 'secondary'}"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+## Handoff: Backend Implementation
+**From**: L2_AppArchitect
+**To**: L3_BackendSpecialist
+
+```apml
+{
+  "type": "handoff",
+  "id": "todo-handoff-backend-001",
+  "package": {
+    "data_models": {
+      "User": {
+        "fields": {
+          "id": "uuid primary",
+          "email": "string unique",
+          "password_hash": "string",
+          "name": "string",
+          "preferences": "json",
+          "created_at": "timestamp",
+          "updated_at": "timestamp"
+        }
+      },
+      "Task": {
+        "fields": {
+          "id": "uuid primary",
+          "user_id": "uuid foreign:users.id",
+          "title": "string required",
+          "description": "text",
+          "category": "string default:personal",
+          "due_date": "timestamp",
+          "completed": "boolean default:false",
+          "completed_at": "timestamp nullable",
+          "created_at": "timestamp",
+          "updated_at": "timestamp"
+        },
+        "indexes": ["user_id", "category", "due_date"]
+      }
+    },
+    "api": {
+      "base_url": "/api/v1",
+      "auth": "JWT",
+      "endpoints": [
+        {
+          "path": "/auth/login",
+          "method": "POST",
+          "body": {
+            "email": "string required email",
+            "password": "string required min:8"
+          },
+          "response": {
+            "token": "string",
+            "user": "User"
+          }
+        },
+        {
+          "path": "/tasks",
+          "method": "GET",
+          "auth": true,
+          "query": {
+            "category": "string optional",
+            "completed": "boolean optional",
+            "due_before": "date optional"
+          },
+          "response": {
+            "tasks": "Task[]",
+            "total": "number"
+          }
+        },
+        {
+          "path": "/tasks",
+          "method": "POST",
+          "auth": true,
+          "body": {
+            "title": "string required",
+            "description": "string optional",
+            "category": "string optional",
+            "due_date": "timestamp optional"
+          },
+          "response": {
+            "task": "Task"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## Status: UI Complete
+**From**: L3_UISpecialist
+**To**: L2_AppArchitect
+
+```apml
+{
+  "type": "status",
+  "id": "todo-status-ui-complete",
+  "handoff_ref": "todo-handoff-ui-001",
+  "progress": 100,
+  "completed": [
+    "All screens implemented",
+    "Responsive design applied",
+    "Animations added",
+    "Dark mode support"
+  ],
+  "deliverables": {
+    "screens": {
+      "count": 7,
+      "responsive": true,
+      "themes": ["light", "dark"]
+    },
+    "components": {
+      "count": 23,
+      "reusable": true,
+      "documented": true
+    }
+  }
+}
+```
+
+## Brief: Deploy to Production
+**From**: L1_ORCH
+**To**: L2_DevOps
+
+```apml
+{
+  "type": "brief",
+  "id": "todo-deploy-001",
+  "project_ref": "todo-brief-001",
+  "deployment": {
+    "platform": "Railway",
+    "environment": "production",
+    "domain": "smarttodo.app",
+    "services": [
+      {
+        "name": "frontend",
+        "type": "static",
+        "build": "npm run build",
+        "dist": "./build"
+      },
+      {
+        "name": "backend",
+        "type": "node",
+        "start": "npm start",
+        "env": {
+          "DATABASE_URL": "${RAILWAY_DATABASE_URL}",
+          "JWT_SECRET": "${generated}",
+          "NODE_ENV": "production"
+        }
+      },
+      {
+        "name": "database",
+        "type": "postgresql",
+        "version": "14"
+      }
+    ]
+  }
+}
+```
+
+## Handoff: Deployment Complete
+**From**: L2_DevOps
+**To**: L1_ORCH
+
+```apml
+{
+  "type": "handoff",
+  "id": "todo-deployment-complete",
+  "brief_ref": "todo-deploy-001",
+  "result": {
+    "status": "success",
+    "urls": {
+      "app": "https://smarttodo.app",
+      "api": "https://api.smarttodo.app",
+      "docs": "https://docs.smarttodo.app"
+    },
+    "metrics": {
+      "build_time": "2m 34s",
+      "deployment_time": "45s",
+      "health_check": "passing"
+    }
+  },
+  "next_steps": [
+    "Monitor application performance",
+    "Set up error tracking",
+    "Configure backups",
+    "Enable auto-scaling"
+  ]
+}
+```

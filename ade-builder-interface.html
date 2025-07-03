@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADE Builder - Visual App Development</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .builder-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            height: 100vh;
+            gap: 1px;
+            background: #333;
+        }
+        
+        .panel {
+            background: #1a1a1a;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            background: #0a0a0a;
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #00ff88;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        /* Left Panel - Mobile Preview */
+        .mobile-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0a;
+            padding: 2rem;
+        }
+        
+        .phone-frame {
+            width: 375px;
+            height: 667px;
+            background: #fff;
+            border-radius: 36px;
+            box-shadow: 0 0 60px rgba(0, 255, 136, 0.2);
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #222;
+        }
+        
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #f5f5f5;
+            overflow-y: auto;
+        }
+        
+        .screen-component {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            color: #333;
+        }
+        
+        /* Middle Panel - APML Messages */
+        .message-flow {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .apml-message {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .message-type {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #00ff88;
+            color: #0a0a0a;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .message-type.brief { background: #00ff88; }
+        .message-type.status { background: #0088ff; }
+        .message-type.handoff { background: #ff8800; }
+        
+        .message-content {
+            margin-top: 0.5rem;
+        }
+        
+        .message-field {
+            margin: 0.5rem 0;
+        }
+        
+        .field-name {
+            color: #888;
+            font-size: 0.75rem;
+        }
+        
+        .field-value {
+            color: #fff;
+            margin-top: 0.25rem;
+        }
+        
+        /* Right Panel - Split */
+        .right-panel {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 1px;
+            background: #333;
+        }
+        
+        .navigation-view {
+            background: #1a1a1a;
+        }
+        
+        .app-flow-diagram {
+            padding: 1rem;
+            background: #0a0a0a;
+            border-radius: 8px;
+            height: 100%;
+        }
+        
+        .chat-panel {
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .chat-message.user {
+            background: #00ff88;
+            color: #0a0a0a;
+            margin-left: auto;
+        }
+        
+        .chat-message.assistant {
+            background: #0a0a0a;
+            border: 1px solid #333;
+        }
+        
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid #333;
+        }
+        
+        .chat-input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 8px;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+        
+        .build-button {
+            background: #00ff88;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .build-button:hover {
+            background: #00cc70;
+            transform: translateY(-1px);
+        }
+        
+        .flow-node {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            margin: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .flow-node:hover {
+            border-color: #00ff88;
+        }
+        
+        .flow-node.active {
+            background: #00ff88;
+            color: #0a0a0a;
+        }
+        
+        /* Simulation Mode */
+        .simulation-active {
+            border: 2px solid #ff8800;
+        }
+        
+        .simulation-banner {
+            background: #ff8800;
+            color: #0a0a0a;
+            padding: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="builder-container">
+            <!-- Left Panel: Mobile Preview -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Mobile Preview</span>
+                    <button class="build-button" @click="toggleSimulation">
+                        {{ simulationMode ? 'Exit Simulation' : 'Simulate' }}
+                    </button>
+                </div>
+                <div class="panel-content mobile-preview">
+                    <div class="phone-frame" :class="{ 'simulation-active': simulationMode }">
+                        <div v-if="simulationMode" class="simulation-banner">SIMULATION MODE</div>
+                        <div class="phone-screen">
+                            <div v-for="component in currentScreenComponents" :key="component.id" 
+                                 class="screen-component"
+                                 @click="handleComponentClick(component)">
+                                <div v-if="component.type === 'header'">
+                                    <h2>{{ component.text }}</h2>
+                                </div>
+                                <div v-else-if="component.type === 'input'">
+                                    <input :type="component.inputType" :placeholder="component.placeholder" 
+                                           style="width: 100%; padding: 0.5rem;">
+                                </div>
+                                <div v-else-if="component.type === 'button'">
+                                    <button style="width: 100%; padding: 0.75rem; background: #007AFF; color: white; border: none; border-radius: 8px;">
+                                        {{ component.text }}
+                                    </button>
+                                </div>
+                                <div v-else-if="component.type === 'list'">
+                                    <div v-for="item in component.items" :key="item" 
+                                         style="padding: 0.75rem; background: white; margin-bottom: 0.5rem; border-radius: 8px;">
+                                        {{ item }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Middle Panel: APML Messages -->
+            <div class="panel">
+                <div class="panel-header">
+                    APML Message Flow
+                </div>
+                <div class="panel-content message-flow">
+                    <div v-for="message in apmlMessages" :key="message.id" class="apml-message">
+                        <div :class="['message-type', message.type]">{{ message.type }}</div>
+                        <div class="message-content">
+                            <div class="message-field">
+                                <div class="field-name">From → To</div>
+                                <div class="field-value">{{ message.from }} → {{ message.to }}</div>
+                            </div>
+                            <div class="message-field">
+                                <div class="field-name">Action</div>
+                                <div class="field-value">{{ message.action }}</div>
+                            </div>
+                            <div v-if="message.payload" class="message-field">
+                                <div class="field-name">Payload</div>
+                                <div class="field-value">{{ JSON.stringify(message.payload, null, 2) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel: Navigation + Chat -->
+            <div class="panel">
+                <div class="right-panel">
+                    <!-- Top: Navigation View -->
+                    <div class="navigation-view">
+                        <div class="panel-header">
+                            App Navigation Flow
+                        </div>
+                        <div class="panel-content">
+                            <div class="app-flow-diagram">
+                                <div class="flow-node" 
+                                     v-for="screen in apmlSpec.screens" 
+                                     :key="screen.id"
+                                     :class="{ active: currentScreen === screen.id }"
+                                     @click="navigateToScreen(screen.id)">
+                                    {{ screen.id }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom: Chat -->
+                    <div class="chat-panel">
+                        <div class="panel-header">
+                            Chat with L1_ORCH
+                        </div>
+                        <div class="chat-messages" ref="chatMessages">
+                            <div v-for="msg in conversation" :key="msg.id" 
+                                 :class="['chat-message', msg.role]">
+                                {{ msg.content }}
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <textarea 
+                                v-model="userInput"
+                                @keydown.enter.prevent="sendMessage"
+                                class="chat-input"
+                                placeholder="Describe your app or request changes..."
+                                rows="3"
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    conversation: [
+                        {
+                            id: 1,
+                            role: 'assistant',
+                            content: "Hi! I'm here to help bring your app idea to life. What would you like to build today?"
+                        }
+                    ],
+                    userInput: '',
+                    apmlSpec: {
+                        screens: [
+                            { id: 'LoginScreen', components: [] },
+                            { id: 'HomeScreen', components: [] }
+                        ],
+                        navigation: {},
+                        dataModels: {}
+                    },
+                    currentScreen: 'LoginScreen',
+                    apmlMessages: [],
+                    simulationMode: false,
+                    messageIdCounter: 1
+                };
+            },
+            computed: {
+                currentScreenComponents() {
+                    // Return components for current screen
+                    const screen = this.apmlSpec.screens.find(s => s.id === this.currentScreen);
+                    if (!screen) return [];
+                    
+                    // Mock components based on screen type
+                    if (this.currentScreen === 'LoginScreen') {
+                        return [
+                            { id: 1, type: 'header', text: 'Welcome Back' },
+                            { id: 2, type: 'input', inputType: 'email', placeholder: 'Email' },
+                            { id: 3, type: 'input', inputType: 'password', placeholder: 'Password' },
+                            { id: 4, type: 'button', text: 'Sign In' }
+                        ];
+                    } else if (this.currentScreen === 'HomeScreen') {
+                        return [
+                            { id: 1, type: 'header', text: 'Your Tasks' },
+                            { id: 2, type: 'list', items: ['Design mockups', 'Write documentation', 'Test features'] },
+                            { id: 3, type: 'button', text: 'Add New Task' }
+                        ];
+                    }
+                    return [];
+                }
+            },
+            methods: {
+                async sendMessage() {
+                    if (!this.userInput.trim()) return;
+                    
+                    // Add user message
+                    this.conversation.push({
+                        id: Date.now(),
+                        role: 'user',
+                        content: this.userInput
+                    });
+                    
+                    // Clear input
+                    const message = this.userInput;
+                    this.userInput = '';
+                    
+                    // Simulate L1_ORCH processing
+                    setTimeout(() => {
+                        this.processUserRequest(message);
+                    }, 1000);
+                    
+                    // Scroll to bottom
+                    this.$nextTick(() => {
+                        this.$refs.chatMessages.scrollTop = this.$refs.chatMessages.scrollHeight;
+                    });
+                },
+                
+                processUserRequest(message) {
+                    // Simple intent detection
+                    const lower = message.toLowerCase();
+                    
+                    if (lower.includes('todo') || lower.includes('task')) {
+                        this.addAPMLMessage('brief', 'User', 'L1_ORCH', 'Create todo app', {
+                            appType: 'todo',
+                            features: ['task management', 'categories', 'due dates']
+                        });
+                        
+                        this.conversation.push({
+                            id: Date.now(),
+                            role: 'assistant',
+                            content: "Great! A todo app. I'll help you build that. I see you'll need task management with categories and due dates. Let me create the structure for you..."
+                        });
+                        
+                        // Add more screens
+                        this.apmlSpec.screens.push(
+                            { id: 'TaskListScreen', components: [] },
+                            { id: 'CreateTaskScreen', components: [] }
+                        );
+                        
+                    } else if (lower.includes('color') || lower.includes('theme')) {
+                        this.addAPMLMessage('change_request', 'User', 'L1_ORCH', 'Update theme', {
+                            element: 'global',
+                            property: 'theme',
+                            value: 'dark'
+                        });
+                        
+                        this.conversation.push({
+                            id: Date.now(),
+                            role: 'assistant',
+                            content: "I'll update the theme for you. Dark mode will be easier on the eyes!"
+                        });
+                    } else {
+                        this.conversation.push({
+                            id: Date.now(),
+                            role: 'assistant',
+                            content: "I understand you want to make changes. Could you be more specific about what you'd like to adjust?"
+                        });
+                    }
+                },
+                
+                addAPMLMessage(type, from, to, action, payload = null) {
+                    this.apmlMessages.unshift({
+                        id: this.messageIdCounter++,
+                        type,
+                        from,
+                        to,
+                        action,
+                        payload,
+                        timestamp: new Date().toISOString()
+                    });
+                },
+                
+                handleComponentClick(component) {
+                    if (!this.simulationMode) return;
+                    
+                    // Simulate interactions
+                    if (component.type === 'button') {
+                        this.addAPMLMessage('status', 'UI', 'L2_Logic', 'Button clicked', {
+                            componentId: component.id,
+                            action: component.text
+                        });
+                        
+                        // Navigate if it's a navigation button
+                        if (component.text === 'Sign In') {
+                            this.navigateToScreen('HomeScreen');
+                        }
+                    }
+                },
+                
+                navigateToScreen(screenId) {
+                    this.currentScreen = screenId;
+                    this.addAPMLMessage('handoff', 'Navigation', 'UI', 'Screen transition', {
+                        from: this.currentScreen,
+                        to: screenId
+                    });
+                },
+                
+                toggleSimulation() {
+                    this.simulationMode = !this.simulationMode;
+                    if (this.simulationMode) {
+                        this.addAPMLMessage('status', 'System', 'All', 'Simulation started', {});
+                    } else {
+                        this.addAPMLMessage('status', 'System', 'All', 'Simulation ended', {});
+                    }
+                }
+            },
+            mounted() {
+                // Initialize mermaid for flow diagrams
+                mermaid.initialize({ theme: 'dark' });
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
