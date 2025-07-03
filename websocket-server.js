@@ -31,9 +31,14 @@ app.get('/apml-app-visualizer.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'apml-app-visualizer.js'));
 });
 
-// Serve the SPA as home page
+// Serve navigation component
+app.get('/ade-nav.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'ade-nav.js'));
+});
+
+// Serve the home page
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index-spa.html'));
+  res.sendFile(path.join(__dirname, 'index-home.html'));
 });
 
 // Serve the L1_ORCH chat interface

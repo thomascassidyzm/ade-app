@@ -6,6 +6,9 @@
     <title>ADE - APML Development Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/apml-app-visualizer.js"></script>
+    <script src="/apml-to-live-preview.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.min.css">
     <style>
         /* Design System Variables */
@@ -503,6 +506,27 @@
                         // Extract body content and scripts
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Extract and inject styles
+                        const styles = doc.querySelectorAll('style');
+                        styles.forEach(style => {
+                            const newStyle = document.createElement('style');
+                            newStyle.textContent = style.textContent;
+                            newStyle.setAttribute('data-page', pageName);
+                            document.head.appendChild(newStyle);
+                        });
+                        
+                        // Extract external stylesheets
+                        const links = doc.querySelectorAll('link[rel="stylesheet"]');
+                        links.forEach(link => {
+                            if (!document.querySelector(`link[href="${link.href}"]`)) {
+                                const newLink = document.createElement('link');
+                                newLink.rel = 'stylesheet';
+                                newLink.href = link.href;
+                                newLink.setAttribute('data-page', pageName);
+                                document.head.appendChild(newLink);
+                            }
+                        });
                         
                         // Remove the old navigation
                         const oldNav = doc.querySelector('nav-component');
