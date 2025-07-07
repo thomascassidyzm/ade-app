@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADE - Start New Project</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .phase-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .phase-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--secondary);
+        }
+
+        .phase-step.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .phase-step.completed {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .phase-arrow {
+            color: var(--border);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            height: 100%;
+            background: white;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--light);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 32px;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 12px;
+        }
+
+        .example-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .example-desc {
+            font-size: 13px;
+            color: var(--secondary);
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: white;
+        }
+
+        .chat-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .chat-subtitle {
+            color: var(--secondary);
+            font-size: 14px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 70%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 16px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: var(--primary);
+            color: white;
+        }
+
+        .message.assistant .message-bubble {
+            background: var(--light);
+            border: 1px solid var(--border);
+        }
+
+        .message-meta {
+            font-size: 11px;
+            color: var(--secondary);
+            margin-top: 4px;
+            padding: 0 8px;
+        }
+
+        .message.user .message-meta {
+            text-align: right;
+        }
+
+        /* APML Preview */
+        .apml-preview {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .apml-preview .keyword {
+            color: #569cd6;
+        }
+
+        .apml-preview .string {
+            color: #ce9178;
+        }
+
+        .apml-preview .property {
+            color: #9cdcfe;
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            background: white;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover {
+            background: #1d4ed8;
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            border: 1px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Progress indicator */
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: var(--light);
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">ADE</div>
+                <div class="phase-indicator">
+                    <div class="phase-step active">
+                        <span>1</span>
+                        <span>Brief</span>
+                    </div>
+                    <span class="phase-arrow">→</span>
+                    <div class="phase-step">
+                        <span>2</span>
+                        <span>Visualize</span>
+                    </div>
+                    <span class="phase-arrow">→</span>
+                    <div class="phase-step">
+                        <span>3</span>
+                        <span>Build</span>
+                    </div>
+                </div>
+            </div>
+            <div class="connection-status">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Quick Start</div>
+                    <div class="example-card" onclick="loadExample('todo')">
+                        <div class="example-title">Todo App</div>
+                        <div class="example-desc">Task management with categories</div>
+                    </div>
+                    <div class="example-card" onclick="loadExample('social')">
+                        <div class="example-title">Social Feed</div>
+                        <div class="example-desc">Posts, likes, and comments</div>
+                    </div>
+                    <div class="example-card" onclick="loadExample('ecommerce')">
+                        <div class="example-title">E-commerce</div>
+                        <div class="example-desc">Products and shopping cart</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">APML Library</div>
+                    <div class="example-card" onclick="browseLibrary()">
+                        <div class="example-title">Browse Components</div>
+                        <div class="example-desc">Reusable APML patterns</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Your Projects</div>
+                    <div class="example-card">
+                        <div class="example-title">No projects yet</div>
+                        <div class="example-desc">Start a conversation to begin</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div class="chat-title">Brief Your App with L1_ORCH</div>
+                    <div class="chat-subtitle">Describe what you want to build in natural language</div>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message assistant">
+                        <div class="message-bubble">
+                            Hi! I'm L1_ORCH, your app orchestrator. I'll help you create a complete app specification through our conversation.
+                            
+                            Tell me about the app you want to build. I'll ask questions to understand:
+                            • Your target users
+                            • Core features and functionality
+                            • Design preferences
+                            • Technical requirements
+                            
+                            You can start with something like "I want to build a..." or choose an example from the sidebar.
+                        </div>
+                        <div class="message-meta">L1_ORCH • Just now</div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            class="chat-input" 
+                            id="chat-input" 
+                            placeholder="Describe your app idea..."
+                            rows="1"
+                        ></textarea>
+                        <button class="send-button" id="send-button" onclick="sendMessage()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/public/js/apml.js"></script>
+    <script src="/public/js/ade-websocket-apml.js"></script>
+    <script>
+        // Auto-resize textarea
+        const chatInput = document.getElementById('chat-input');
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Enter to send (Shift+Enter for new line)
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // WebSocket connection status
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            
+            if (connected) {
+                dot.classList.add('connected');
+                text.textContent = 'Connected to L1_ORCH';
+            } else {
+                dot.classList.remove('connected');
+                text.textContent = 'Connecting...';
+            }
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage('user', message);
+            
+            // Send via APML
+            const apmlMessage = {
+                apml: '1.0',
+                type: 'brief',
+                from: 'user',
+                to: 'L1_ORCH',
+                content: {
+                    message: message,
+                    phase: 'specification',
+                    timestamp: new Date().toISOString()
+                }
+            };
+            
+            adeWs.sendAPML(apmlMessage);
+            
+            // Clear input and reset height
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Show thinking indicator
+            showThinking();
+        }
+
+        // Add message to chat
+        function addMessage(type, content, meta) {
+            const messages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            // Handle APML preview
+            let messageContent = content;
+            if (typeof content === 'object' && content.apml) {
+                messageContent = `
+                    <div>Here's the APML specification:</div>
+                    <div class="apml-preview">${formatAPML(content)}</div>
+                    <div class="action-buttons">
+                        <button class="action-button" onclick="proceedToVisualize()">Visualize This →</button>
+                        <button class="action-button" onclick="refineSpec()">Refine Further</button>
+                    </div>
+                `;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${messageContent}</div>
+                <div class="message-meta">${meta || (type === 'user' ? 'You' : 'L1_ORCH')} • Just now</div>
+            `;
+            
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Show thinking indicator
+        function showThinking() {
+            const messages = document.getElementById('chat-messages');
+            const thinking = document.createElement('div');
+            thinking.id = 'thinking-indicator';
+            thinking.className = 'message assistant';
+            thinking.innerHTML = `
+                <div class="progress-indicator">
+                    <div class="spinner"></div>
+                    <span>L1_ORCH is thinking...</span>
+                </div>
+            `;
+            messages.appendChild(thinking);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Remove thinking indicator
+        function hideThinking() {
+            const thinking = document.getElementById('thinking-indicator');
+            if (thinking) thinking.remove();
+        }
+
+        // Format APML for display
+        function formatAPML(apml) {
+            // Simple syntax highlighting
+            let formatted = JSON.stringify(apml, null, 2);
+            formatted = formatted.replace(/"([^"]+)":/g, '<span class="property">"$1"</span>:');
+            formatted = formatted.replace(/: "([^"]+)"/g, ': <span class="string">"$1"</span>');
+            formatted = formatted.replace(/: (\d+)/g, ': <span class="keyword">$1</span>');
+            return formatted;
+        }
+
+        // Load example
+        function loadExample(type) {
+            const examples = {
+                todo: "I want to build a todo app with categories, due dates, and reminders. Users should be able to create lists, share them, and get notifications.",
+                social: "I need a social feed app where users can post updates, follow each other, like and comment on posts, with real-time updates.",
+                ecommerce: "I want to create an e-commerce app with product browsing, search, shopping cart, checkout, and order tracking."
+            };
+            
+            if (examples[type]) {
+                document.getElementById('chat-input').value = examples[type];
+                chatInput.style.height = 'auto';
+                chatInput.style.height = chatInput.scrollHeight + 'px';
+                chatInput.focus();
+            }
+        }
+
+        // Navigation functions
+        function proceedToVisualize() {
+            // Save current APML spec and navigate to visualizer
+            sessionStorage.setItem('apml_spec', JSON.stringify(currentAPMLSpec));
+            window.location.href = '/#visualizer';
+        }
+
+        function refineSpec() {
+            addMessage('user', "Let's refine this specification further...");
+        }
+
+        function browseLibrary() {
+            addMessage('assistant', "Here are some reusable APML components from the library:\n\n• Authentication flows\n• Navigation patterns\n• Data tables\n• Form components\n• Chat interfaces\n\nWhich would you like to explore?");
+        }
+
+        // Store current APML spec
+        let currentAPMLSpec = null;
+
+        // Initialize
+        window.addEventListener('load', () => {
+            // Override WebSocket handlers
+            const originalStatus = adeWs.updateStatus;
+            adeWs.updateStatus = function(connected) {
+                originalStatus.call(this, connected);
+                updateConnectionStatus(connected);
+            };
+            
+            // Handle incoming messages
+            const originalHandle = adeWs.handleAPMLMessage;
+            adeWs.handleAPMLMessage = function(message) {
+                originalHandle.call(this, message);
+                
+                hideThinking();
+                
+                // Handle L1_ORCH responses
+                if (message.from === 'L1_ORCH' || message.type === 'response') {
+                    if (message.content) {
+                        if (message.content.apml_spec) {
+                            currentAPMLSpec = message.content.apml_spec;
+                            addMessage('assistant', { apml: currentAPMLSpec });
+                        } else {
+                            addMessage('assistant', message.content.message || JSON.stringify(message.content));
+                        }
+                    }
+                }
+            };
+        });
+    </script>
+</body>
+</html>

@@ -27,9 +27,18 @@ app.use((req, res, next) => {
 // Serve static files
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Main app - serve the proper 3-column interface
+// Main app - serve the start page
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'ade-start.html'));
+});
+
+// Phase-specific routes
+app.get('/visualizer', (req, res) => {
   res.sendFile(path.join(__dirname, 'ade-interface-v2.html'));
+});
+
+app.get('/start', (req, res) => {
+  res.sendFile(path.join(__dirname, 'ade-start.html'));
 });
 
 // Legacy interface
