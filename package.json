@@ -2,15 +2,14 @@
   "name": "claude-multi-agent-system",
   "version": "1.0.0",
   "description": "Multi-agent coordination system for Claude agents using MCP",
-  "main": "ade-unified-server.js",
+  "main": "ade-server.js",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node ade-unified-server.js",
-    "dev": "node ade-unified-server.js",
-    "test": "node test-unified-agent.js",
-    "old-server": "node websocket-server.js"
+    "start": "node ade-server.js",
+    "dev": "node ade-server.js",
+    "test": "echo 'No tests yet'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.2",

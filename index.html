@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADE - APML Development Engine</title>
+    <link rel="stylesheet" href="/public/css/ade.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1>ADE</h1>
+                <span class="nav-subtitle">APML Development Engine</span>
+            </div>
+            <div class="nav-links">
+                <a href="#/" class="nav-link active" data-route="home">Home</a>
+                <a href="#/chat" class="nav-link" data-route="chat">Chat</a>
+                <a href="#/agents" class="nav-link" data-route="agents">Agents</a>
+                <a href="#/files" class="nav-link" data-route="files">Files</a>
+                <a href="#/tools" class="nav-link" data-route="tools">Tools</a>
+            </div>
+            <div class="nav-status">
+                <div class="status-indicator" id="connection-status"></div>
+                <span id="connection-text">Connecting...</span>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main">
+            <!-- Content will be dynamically loaded here -->
+        </main>
+    </div>
+
+    <!-- Page Templates -->
+    <template id="home-template">
+        <div class="page home">
+            <div class="hero">
+                <h2>Welcome to ADE</h2>
+                <p>Build applications using natural language and AI agents</p>
+            </div>
+            
+            <div class="cards">
+                <div class="card" onclick="router.navigate('/chat')">
+                    <div class="card-icon">💬</div>
+                    <h3>Chat Interface</h3>
+                    <p>Describe what you want to build in natural language</p>
+                </div>
+                
+                <div class="card" onclick="router.navigate('/agents')">
+                    <div class="card-icon">🤖</div>
+                    <h3>Agent System</h3>
+                    <p>Manage AI agents that build your application</p>
+                </div>
+                
+                <div class="card" onclick="router.navigate('/files')">
+                    <div class="card-icon">📁</div>
+                    <h3>Virtual Files</h3>
+                    <p>Browse and edit generated code and assets</p>
+                </div>
+                
+                <div class="card" onclick="router.navigate('/tools')">
+                    <div class="card-icon">🛠️</div>
+                    <h3>MCP Tools</h3>
+                    <p>Connect to Claude Desktop and other services</p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="chat-template">
+        <div class="page chat">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2>Chat with ADE</h2>
+                    <p>Describe what you want to build</p>
+                </div>
+                
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message assistant">
+                        <strong>ADE:</strong> Hello! I'm ready to help you build your application. What would you like to create?
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <input type="text" id="chat-input" placeholder="Type your message..." />
+                    <button onclick="ade.sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="agents-template">
+        <div class="page agents">
+            <div class="page-header">
+                <h2>Agent Management</h2>
+                <button class="btn-primary" onclick="ade.createAgent()">Create Agent</button>
+            </div>
+            
+            <div id="agents-list" class="agents-list">
+                <!-- Agents will be loaded here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="files-template">
+        <div class="page files">
+            <div class="page-header">
+                <h2>Virtual File System</h2>
+                <button class="btn-primary" onclick="ade.createFile()">New File</button>
+            </div>
+            
+            <div class="files-container">
+                <div class="files-sidebar" id="files-list">
+                    <!-- File list will be loaded here -->
+                </div>
+                <div class="files-content" id="file-content">
+                    <div class="empty-state">
+                        Select a file to view its contents
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tools-template">
+        <div class="page tools">
+            <div class="page-header">
+                <h2>MCP Tools</h2>
+            </div>
+            
+            <div class="tools-content">
+                <div class="tool-section">
+                    <h3>Claude Desktop Configuration</h3>
+                    <p>Add this to your Claude Desktop config:</p>
+                    <pre><code>{
+  "mcpServers": {
+    "ade": {
+      "command": "curl",
+      "args": ["-X", "POST", "<span id="mcp-url">http://localhost:3000</span>/api/mcp"]
+    }
+  }
+}</code></pre>
+                </div>
+                
+                <div class="tool-section">
+                    <h3>Available Tools</h3>
+                    <div id="tools-list">
+                        <!-- Tools will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="/public/js/ade-app.js"></script>
+    <script src="/public/js/ade-router.js"></script>
+    <script src="/public/js/ade-websocket.js"></script>
+</body>
+</html>

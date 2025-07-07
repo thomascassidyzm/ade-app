@@ -1,0 +1,112 @@
+---
+apml: 1.0
+type: cleanup_manifest
+title: Clean Slate - Remove All Old Code
+created: 2024-01-10
+---
+
+to_delete:
+  html_files:
+    - index-cloud.html
+    - sexy-dashboard.html
+    - simple-dashboard.html
+    - dashboard-with-files.html
+    - index-spa.html
+    - apml-app-flow-visualizer.html
+    - index-home.html
+    - l1-orch-interface.html
+    - api-cost-calculator.html
+    - apml-visualizer.html
+    - vfs-enhanced-dashboard.html
+    - ade-builder-interface.html
+    
+  old_servers:
+    - websocket-server.js
+    - websocket-server-apml.js
+    - mcp-webapp-server.js
+    - claude-api-server.js
+    - server.js
+    - ade-unified-server.js  # Yes, delete this too!
+    
+  old_components:
+    - nav-component.js
+    - ade-nav.js
+    - shared-nav-styles.css
+    - apml-app-visualizer.js
+    - apml-to-live-preview.js
+    - apml-code-generator.js
+    - apml-websocket-adapter.js
+    - deployment-websocket-handler.js
+    - vfs-output-handler.js
+    - vfs-storage-handler.js
+    - vfs-agent-wrapper.js
+    - protoADE-connector.js
+    - mcp-adapter.js
+    - mcp-bridge.js
+    - mcp-http-adapter.js
+    - apml-protocol.js
+    - apml-shaping-system.js
+    - ade-deployment-orchestrator.js
+    - deployment-pipeline.js
+    
+  test_files:
+    - test-agent.js
+    - test-agent-connection.js
+    - test-apml-communication.js
+    - test-deployment.js
+    - test-message-flow.js
+    - test-unified-agent.js
+    - test-vfs-agent.js
+    - test-vfs.js
+    - test-deployment-endpoints.js
+    - check-deployment.js
+    
+  new_infrastructure:
+    description: Delete the "new" infrastructure we just built
+    files:
+      - apml-message-broker.js
+      - vfs-write-api.js
+      - agent-registry.js
+      - apml-mcp-bridge.js
+    
+  documentation:
+    - "*.md"  # All markdown files
+    - ADE-INFRASTRUCTURE-README.md
+    
+to_keep:
+  essential_config:
+    - package.json
+    - package-lock.json
+    - railway.json
+    - .gitignore
+    - node_modules/
+    
+  apml_specs:
+    - "*.apml"  # Keep APML files as specs
+    
+  data:
+    - vfs-storage/  # Keep the data
+    - lib/  # Keep libraries
+    - api/  # Keep API folder for now
+    
+clean_build_plan:
+  architecture:
+    - Single server file: ade-server.js
+    - Single page app with dynamic routing
+    - Clean component structure
+    - No duplicate navigation
+    - Proper separation of concerns
+    
+  structure:
+    /
+    ├── ade-server.js         # The ONE server
+    ├── index.html            # The ONE entry point
+    ├── public/
+    │   ├── css/
+    │   │   └── ade.css      # The ONE stylesheet
+    │   └── js/
+    │       ├── ade-app.js   # Main app logic
+    │       ├── ade-agents.js # Agent system
+    │       └── ade-mcp.js   # MCP integration
+    └── config/
+        └── ade-config.apml   # Configuration in APML
