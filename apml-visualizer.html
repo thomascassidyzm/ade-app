@@ -6,7 +6,8 @@
     <title>APML Visualizer</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
-    <script src="/nav-component.js"></script>
+    <link rel="stylesheet" href="/ade-design-system.css">
+    <script src="/ade-nav.js"></script>
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -643,8 +644,6 @@
             }
         }).mount('#app');
         
-        // Add navigation
-        createADENav('visualizer');
     </script>
 </body>
 </html>

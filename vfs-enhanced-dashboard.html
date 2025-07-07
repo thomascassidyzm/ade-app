@@ -6,7 +6,8 @@
     <title>ADE Multi-Agent Hub - VFS Enhanced</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
-    <script src="/nav-component.js"></script>
+    <link rel="stylesheet" href="/ade-design-system.css">
+    <script src="/ade-nav.js"></script>
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -893,8 +894,6 @@
             }
         }).mount('#app');
         
-        // Add navigation
-        createADENav('dashboard');
     </script>
 </body>
 </html>

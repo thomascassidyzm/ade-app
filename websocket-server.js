@@ -24,9 +24,7 @@ app.get('/shared-nav-styles.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'shared-nav-styles.css'));
 });
 
-app.get('/nav-component.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'nav-component.js'));
-});
+// nav-component.js removed - using ade-nav.js
 
 app.get('/apml-to-live-preview.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'apml-to-live-preview.js'));
