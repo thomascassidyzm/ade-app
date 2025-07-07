@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADE - APML Development Engine</title>
+    <link rel="stylesheet" href="/public/css/ade.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1>ADE</h1>
+                <span class="nav-subtitle">APML Development Engine</span>
+            </div>
+            <div class="nav-links">
+                <a href="#/" class="nav-link active" data-route="home">Home</a>
+                <a href="#/chat" class="nav-link" data-route="chat">Chat</a>
+                <a href="#/agents" class="nav-link" data-route="agents">Agents</a>
+                <a href="#/files" class="nav-link" data-route="files">Files</a>
+                <a href="#/tools" class="nav-link" data-route="tools">Tools</a>
+            </div>
+            <div class="nav-status">
+                <div class="status-indicator" id="connection-status"></div>
+                <span id="connection-text">Connecting...</span>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main">
+            <!-- Content will be dynamically loaded here -->
+        </main>
+    </div>
+
+    <!-- Page Templates -->
+    <template id="home-template">
+        <div class="page home">
+            <div class="hero">
+                <h2>Welcome to ADE</h2>
+                <p>Build applications using APML - Agent Protocol Markup Language</p>
+            </div>
+            
+            <div class="cards">
+                <div class="card" onclick="router.navigate('/chat')">
+                    <div class="card-icon">💬</div>
+                    <h3>APML Chat</h3>
+                    <p>Communicate with agents using APML protocol</p>
+                </div>
+                
+                <div class="card" onclick="router.navigate('/agents')">
+                    <div class="card-icon">🤖</div>
+                    <h3>Agent Registry</h3>
+                    <p>Manage agents with APML-based coordination</p>
+                </div>
+                
+                <div class="card" onclick="router.navigate('/files')">
+                    <div class="card-icon">📁</div>
+                    <h3>APML Files</h3>
+                    <p>Store and manage APML specifications</p>
+                </div>
+                
+                <div class="card" onclick="router.navigate('/tools')">
+                    <div class="card-icon">🛠️</div>
+                    <h3>MCP Bridge</h3>
+                    <p>Connect Claude Desktop via APML-to-MCP bridge</p>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h3>APML Example</h3>
+                <pre><code>---
+apml: 1.0
+type: agent_registration
+from: my-agent
+to: ade-server
+---
+id: agent-001
+name: Code Generator
+capabilities:
+  - code_generation
+  - file_operations
+  - testing</code></pre>
+            </div>
+        </div>
+    </template>
+
+    <template id="chat-template">
+        <div class="page chat">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2>APML Chat Interface</h2>
+                    <p>Send APML messages to agents</p>
+                </div>
+                
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message assistant">
+                        <pre>---
+apml: 1.0
+type: welcome
+from: ade
+---
+message: Ready to receive APML messages
+status: online</pre>
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <textarea id="chat-input" placeholder="Enter APML message..." rows="5">---
+apml: 1.0
+type: brief
+from: user
+to: all
+---
+task: </textarea>
+                    <button onclick="ade.sendAPMLMessage()">Send APML</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="agents-template">
+        <div class="page agents">
+            <div class="page-header">
+                <h2>Agent Registry</h2>
+                <button class="btn-primary" onclick="ade.createAgentAPML()">Register Agent</button>
+            </div>
+            
+            <div id="agents-list" class="agents-list">
+                <!-- Agents will be loaded here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="files-template">
+        <div class="page files">
+            <div class="page-header">
+                <h2>APML File System</h2>
+                <button class="btn-primary" onclick="ade.createAPMLFile()">New APML File</button>
+            </div>
+            
+            <div class="files-container">
+                <div class="files-sidebar" id="files-list">
+                    <!-- File list will be loaded here -->
+                </div>
+                <div class="files-content" id="file-content">
+                    <div class="empty-state">
+                        Select an APML file to view
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tools-template">
+        <div class="page tools">
+            <div class="page-header">
+                <h2>MCP Tools (APML Bridge)</h2>
+            </div>
+            
+            <div class="tools-content">
+                <div class="tool-section">
+                    <h3>Claude Desktop Configuration</h3>
+                    <p>The MCP endpoint translates between JSON and APML:</p>
+                    <pre><code>{
+  "mcpServers": {
+    "ade": {
+      "command": "curl",
+      "args": ["-X", "POST", "<span id="mcp-url">http://localhost:3000</span>/api/mcp"]
+    }
+  }
+}</code></pre>
+                </div>
+                
+                <div class="tool-section">
+                    <h3>APML-Native Tools</h3>
+                    <div id="tools-list">
+                        <!-- Tools will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="tool-section">
+                    <h3>API Endpoints (APML Format)</h3>
+                    <pre><code>GET  /api/health         # Returns APML health status
+POST /api/agents/register # APML agent registration
+GET  /api/agents         # Returns APML agent list
+POST /api/vfs/write      # Write APML content
+GET  /api/vfs/read/:path # Returns APML file
+GET  /api/vfs/list       # Returns APML file list</code></pre>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="/public/js/apml.js"></script>
+    <script src="/public/js/ade-app-apml.js"></script>
+    <script src="/public/js/ade-router.js"></script>
+    <script src="/public/js/ade-websocket-apml.js"></script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+/**
+ * ADE Server - APML Native Version
+ * All internal communications use APML, not JSON
+ */
+
+const express = require('express');
+const WebSocket = require('ws');
+const path = require('path');
+const fs = require('fs').promises;
+const APMLParser = require('./apml-parser');
+
+const app = express();
+
+// Middleware to parse APML bodies
+app.use(express.text({ type: 'application/apml' }));
+app.use(express.json()); // Still need JSON for MCP compatibility
+
+// CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+// Serve static files
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
+// Main app
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index-apml.html'));
+});
+
+// API Routes
+const api = express.Router();
+
+// Parse APML requests
+api.use((req, res, next) => {
+  if (req.headers['content-type'] === 'application/apml' && typeof req.body === 'string') {
+    try {
+      req.body = APMLParser.parse(req.body);
+      req.isAPML = true;
+    } catch (error) {
+      return res.status(400).send(APMLParser.stringify({
+        apml: '1.0',
+        type: 'error',
+        error: 'Invalid APML format',
+        message: error.message
+      }));
+    }
+  }
+  next();
+});
+
+// Health check - returns APML
+api.get('/health', (req, res) => {
+  const health = {
+    apml: '1.0',
+    type: 'health_status',
+    timestamp: new Date().toISOString(),
+    server: 'ade-server-apml',
+    version: '2.0.0',
+    status: 'healthy'
+  };
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify(health));
+});
+
+// Agent management
+const agents = new Map();
+
+api.post('/agents/register', (req, res) => {
+  const data = req.body;
+  
+  if (!data.id || !data.name || !data.capabilities) {
+    res.type('application/apml');
+    return res.status(400).send(APMLParser.stringify({
+      apml: '1.0',
+      type: 'error',
+      error: 'Missing required fields',
+      required: ['id', 'name', 'capabilities']
+    }));
+  }
+  
+  const agent = {
+    id: data.id,
+    name: data.name,
+    capabilities: data.capabilities,
+    status: 'online',
+    registeredAt: new Date().toISOString()
+  };
+  
+  agents.set(data.id, agent);
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'agent_registered',
+    id: agent.id,
+    success: true,
+    agent: agent
+  }));
+});
+
+api.get('/agents', (req, res) => {
+  const agentList = {
+    apml: '1.0',
+    type: 'agent_list',
+    timestamp: new Date().toISOString(),
+    count: agents.size,
+    agents: Array.from(agents.values())
+  };
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify(agentList));
+});
+
+// VFS - APML native
+const vfs = new Map();
+
+api.post('/vfs/write', (req, res) => {
+  const data = req.body;
+  
+  if (!data.path || !data.content) {
+    res.type('application/apml');
+    return res.status(400).send(APMLParser.stringify({
+      apml: '1.0',
+      type: 'error',
+      error: 'Path and content required'
+    }));
+  }
+  
+  vfs.set(data.path, {
+    content: data.content,
+    metadata: data.metadata || {},
+    updatedAt: new Date().toISOString()
+  });
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'file_written',
+    path: data.path,
+    success: true,
+    timestamp: new Date().toISOString()
+  }));
+});
+
+api.get('/vfs/read/:path(*)', (req, res) => {
+  const file = vfs.get(req.params.path);
+  
+  if (!file) {
+    res.type('application/apml');
+    return res.status(404).send(APMLParser.stringify({
+      apml: '1.0',
+      type: 'error',
+      error: 'File not found',
+      path: req.params.path
+    }));
+  }
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'file_content',
+    path: req.params.path,
+    content: file.content,
+    metadata: file.metadata,
+    updatedAt: file.updatedAt
+  }));
+});
+
+api.get('/vfs/list', (req, res) => {
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'file_list',
+    timestamp: new Date().toISOString(),
+    count: vfs.size,
+    files: Array.from(vfs.keys())
+  }));
+});
+
+// MCP endpoint - translates between JSON and APML
+api.post('/mcp', async (req, res) => {
+  const { method, params, id } = req.body;
+  
+  try {
+    let result;
+    
+    switch (method) {
+      case 'initialize':
+        result = {
+          protocolVersion: '2024-11-05',
+          serverInfo: {
+            name: 'ade-server-apml',
+            version: '2.0.0',
+            description: 'APML-native ADE server'
+          },
+          capabilities: {
+            tools: {},
+            resources: {}
+          }
+        };
+        break;
+        
+      case 'tools/list':
+        result = {
+          tools: [
+            {
+              name: 'send_apml',
+              description: 'Send APML message to agents',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  to: { type: 'string' },
+                  type: { type: 'string' },
+                  content: { type: 'object' }
+                },
+                required: ['to', 'type', 'content']
+              }
+            },
+            {
+              name: 'create_agent',
+              description: 'Create a new ADE agent',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  capabilities: { type: 'array', items: { type: 'string' } }
+                },
+                required: ['name', 'capabilities']
+              }
+            },
+            {
+              name: 'write_apml_file',
+              description: 'Write APML content to VFS',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  path: { type: 'string' },
+                  content: { type: 'object' },
+                  metadata: { type: 'object' }
+                },
+                required: ['path', 'content']
+              }
+            }
+          ]
+        };
+        break;
+        
+      case 'tools/call':
+        const tool = params.name;
+        const args = params.arguments;
+        
+        if (tool === 'send_apml') {
+          // Convert to APML and broadcast
+          const apmlMessage = {
+            apml: '1.0',
+            type: args.type,
+            from: 'mcp',
+            to: args.to,
+            timestamp: new Date().toISOString(),
+            content: args.content
+          };
+          
+          // Broadcast via WebSocket
+          broadcast(apmlMessage);
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: `APML message sent to ${args.to}`
+            }]
+          };
+        } else if (tool === 'create_agent') {
+          const agentId = `agent-${Date.now()}`;
+          agents.set(agentId, {
+            id: agentId,
+            ...args,
+            status: 'online',
+            registeredAt: new Date().toISOString()
+          });
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: `Created agent ${agentId} with capabilities: ${args.capabilities.join(', ')}`
+            }]
+          };
+        } else if (tool === 'write_apml_file') {
+          const apmlContent = APMLParser.stringify(args.content);
+          vfs.set(args.path, {
+            content: apmlContent,
+            metadata: args.metadata || {},
+            updatedAt: new Date().toISOString()
+          });
+          
+          result = {
+            content: [{
+              type: 'text',
+              text: `APML file written to ${args.path}`
+            }]
+          };
+        } else {
+          throw new Error(`Unknown tool: ${tool}`);
+        }
+        break;
+        
+      default:
+        throw new Error(`Unknown method: ${method}`);
+    }
+    
+    res.json({
+      jsonrpc: '2.0',
+      id,
+      result
+    });
+    
+  } catch (error) {
+    res.json({
+      jsonrpc: '2.0',
+      id,
+      error: {
+        code: -32603,
+        message: error.message
+      }
+    });
+  }
+});
+
+// Mount API routes
+app.use('/api', api);
+
+// Start server
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+  console.log(`🚀 ADE Server (APML Native) running on port ${PORT}`);
+  console.log(`   http://localhost:${PORT}`);
+  console.log(`   MCP endpoint: http://localhost:${PORT}/api/mcp`);
+  console.log(`   All internal APIs use APML format`);
+});
+
+// WebSocket for real-time APML communication
+const wss = new WebSocket.Server({ server });
+const clients = new Set();
+
+function broadcast(apmlMessage) {
+  const apmlString = APMLParser.stringify(apmlMessage);
+  
+  for (const client of clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(apmlString);
+    }
+  }
+}
+
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  console.log('Client connected. Total clients:', clients.size);
+  
+  // Send welcome message in APML
+  const welcome = {
+    apml: '1.0',
+    type: 'welcome',
+    from: 'server',
+    message: 'Connected to ADE Server (APML Native)',
+    timestamp: new Date().toISOString()
+  };
+  
+  ws.send(APMLParser.stringify(welcome));
+  
+  ws.on('message', (data) => {
+    try {
+      // Parse incoming APML
+      const message = APMLParser.parse(data.toString());
+      
+      // Add server metadata
+      message.from = message.from || 'anonymous';
+      message.timestamp = message.timestamp || new Date().toISOString();
+      
+      // Broadcast to all clients
+      broadcast(message);
+      
+    } catch (error) {
+      // Send error in APML
+      ws.send(APMLParser.stringify({
+        apml: '1.0',
+        type: 'error',
+        error: 'Invalid APML message',
+        message: error.message
+      }));
+    }
+  });
+  
+  ws.on('close', () => {
+    clients.delete(ws);
+    console.log('Client disconnected. Total clients:', clients.size);
+  });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
