@@ -20,9 +20,7 @@ app.get('/ade-design-system.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'ade-design-system.css'));
 });
 
-app.get('/shared-nav-styles.css', (req, res) => {
-  res.sendFile(path.join(__dirname, 'shared-nav-styles.css'));
-});
+// shared-nav-styles.css removed - styles are in ade-nav.js
 
 // nav-component.js removed - using ade-nav.js
 
