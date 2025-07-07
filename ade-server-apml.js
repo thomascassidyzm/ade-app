@@ -392,9 +392,6 @@ const server = app.listen(PORT, () => {
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
 
-// In-memory VFS for demo (in production would use database)
-const vfs = new Map();
-
 // Handle VFS operations
 function handleVFSOperation(message) {
   const content = message.content || {};
