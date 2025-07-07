@@ -1,0 +1,155 @@
+---
+apml: 1.0
+type: system_documentation
+title: ADE Infrastructure
+version: 1.0.0
+created: 2024-01-10
+author: ADE System
+---
+
+system:
+  name: ADE Infrastructure
+  description: Core infrastructure enabling ADE agents to communicate and collaborate
+  status: operational
+  
+components:
+  - id: apml_message_broker
+    type: service
+    path: apml-message-broker.js
+    capabilities:
+      - agent_communication
+      - message_routing
+      - apml_protocol
+    description: Routes all agent-to-agent messages using APML protocol
+    
+  - id: vfs_write_api
+    type: api
+    path: vfs-write-api.js
+    endpoints:
+      - method: POST
+        path: /api/vfs/write
+        auth: agent_token
+      - method: POST
+        path: /api/vfs/output
+        auth: agent_token
+    description: Unified interface for agents to write outputs
+    
+  - id: agent_registry
+    type: service
+    path: agent-registry.js
+    capabilities:
+      - agent_registration
+      - capability_discovery
+      - health_monitoring
+    description: Manages agent lifecycle and capability matching
+    
+  - id: apml_mcp_bridge
+    type: bridge
+    path: apml-mcp-bridge.js
+    capabilities:
+      - tool_mapping
+      - async_responses
+      - claude_integration
+    description: Maps agent capabilities to MCP tools
+    
+  - id: unified_server
+    type: server
+    path: ade-unified-server.js
+    ports:
+      http: 3000
+      websocket: 3000
+    endpoints:
+      - /api/agents
+      - /api/vfs
+      - /mcp
+    description: Central server bringing all components together
+
+startup_sequence:
+  - step: start_server
+    command: node ade-unified-server.js
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      
+  - step: verify_health
+    endpoint: /health
+    expected: 
+      status: ok
+      
+  - step: register_agents
+    description: Agents connect and register capabilities
+
+agent_protocol:
+  registration:
+    endpoint: /api/agents/register
+    payload:
+      agentId: string
+      config:
+        name: string
+        capabilities: array
+        description: string
+    response:
+      token: string
+      vfsEndpoint: string
+      wsEndpoint: string
+      
+  websocket:
+    connection:
+      url: ws://localhost:3000
+      
+    authentication:
+      type: agent_connect
+      agentId: string
+      token: string
+      
+    message_format:
+      type: apml_message
+      to: string
+      messageType: string
+      content: object
+
+mcp_integration:
+  claude_desktop_config:
+    mcpServers:
+      ade:
+        command: node
+        args: 
+          - ade-unified-server.js
+        env:
+          PORT: 3000
+          NODE_ENV: production
+          
+  available_tools:
+    - create_file
+    - edit_file
+    - search_code
+    - run_tests
+    - create_component
+    - design_api
+    - create_apml_spec
+
+test_procedure:
+  - id: test_infrastructure
+    command: node test-unified-agent.js
+    validates:
+      - agent_registration
+      - websocket_connection
+      - message_routing
+      - vfs_writing
+      
+  - id: test_multi_agent
+    description: Tests multiple agents communicating
+    expected:
+      - broadcast_messages_received
+      - direct_messages_routed
+      - vfs_outputs_created
+
+status:
+  infrastructure: ready
+  next_steps:
+    - create_specialized_agents
+    - fix_navigation_system
+    - build_missing_interfaces
+    - enable_self_improvement
+  
+  message: ADE can now use itself to build itself!

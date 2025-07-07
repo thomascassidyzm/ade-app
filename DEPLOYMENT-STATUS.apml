@@ -1,0 +1,69 @@
+---
+apml: 1.0
+type: deployment_status
+title: ADE Unified Server Deployment
+timestamp: 2024-01-10
+---
+
+deployment:
+  target: Railway
+  status: ready_to_deploy
+  
+changes_made:
+  - id: package_json
+    description: Updated start script to use ade-unified-server.js
+    file: package.json
+    
+  - id: railway_config
+    description: Updated Railway start command
+    file: railway.json
+    
+  - id: server_routes
+    description: Fixed page routes to use existing HTML files
+    file: ade-unified-server.js
+    changes:
+      - Mapped / to index-home.html
+      - Mapped /chat to l1-orch-interface.html
+      - Mapped /dashboard to vfs-enhanced-dashboard.html
+      - Mapped /visualizer to apml-app-flow-visualizer.html
+      - Mapped /builder to ade-builder-interface.html
+      - Added /cost-calculator route
+      - Added routes for design system and APML utilities
+
+server_features:
+  - apml_message_broker: Agent-to-agent communication
+  - vfs_write_api: Unified output management
+  - agent_registry: Capability discovery
+  - mcp_bridge: Claude Desktop integration
+  - websocket: Real-time updates
+  
+endpoints:
+  http_api:
+    - POST /api/agents/register
+    - POST /api/vfs/write
+    - POST /api/vfs/output
+    - GET /api/agents
+    - GET /health
+    
+  mcp:
+    - POST /mcp
+    
+  websocket:
+    - ws://[host]/
+    
+deployment_steps:
+  1. Push to Railway repository
+  2. Railway will auto-deploy with new settings
+  3. Test at https://ade-app.up.railway.app
+  4. Configure Claude Desktop to use Railway URL
+  
+claude_desktop_config:
+  mcpServers:
+    ade_production:
+      command: curl
+      args: 
+        - -X
+        - POST
+        - https://ade-app.up.railway.app/mcp
+      env:
+        MCP_API_KEY: "[generate-secure-key]"

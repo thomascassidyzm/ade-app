@@ -1,0 +1,59 @@
+---
+apml: 1.0
+type: quick_start_guide
+title: ADE Infrastructure Quick Start
+---
+
+quick_start:
+  step_1:
+    action: start_server
+    command: node ade-unified-server.js
+    expected_output:
+      - "ADE Unified Server running on port 3000"
+      - "Components initialized"
+      - "HTTP API: http://localhost:3000"
+      - "WebSocket: ws://localhost:3000"
+      - "MCP Endpoint: http://localhost:3000/mcp"
+      
+  step_2:
+    action: test_agents
+    command: node test-unified-agent.js
+    expected_output:
+      - "Agent registered successfully"
+      - "WebSocket connected"
+      - "All agents connected!"
+      
+  step_3:
+    action: verify_health
+    command: curl http://localhost:3000/health
+    expected_response:
+      status: ok
+      components:
+        vfs: operational
+        messageBroker: operational
+        agentRegistry: "0 agents registered"
+        mcp: operational
+
+agent_creation:
+  minimal_example:
+    code: |
+      const agent = new TestUnifiedAgent('my-agent');
+      await agent.register();
+      await agent.connect();
+      agent.sendMessage('broadcast', { message: 'Hello!' });
+
+infrastructure_ready:
+  capabilities:
+    - agent_to_agent_communication
+    - vfs_output_management
+    - mcp_tool_integration
+    - capability_based_routing
+    - real_time_updates
+    
+  next_actions:
+    - create_l1_orchestrator
+    - build_specialized_agents
+    - fix_navigation_properly
+    - complete_feedback_loop
+    
+  status: READY_TO_BUILD_ITSELF
