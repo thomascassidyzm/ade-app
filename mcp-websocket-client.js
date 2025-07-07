@@ -79,7 +79,10 @@ function handleRequest(request) {
       connect();
       sendResponse(id, {
         protocolVersion: '2024-11-05',
-        capabilities: { tools: {} },
+        capabilities: { 
+          tools: {},
+          prompts: {}
+        },
         serverInfo: {
           name: 'ade-websocket',
           version: '1.0.0'
@@ -98,10 +101,10 @@ function handleRequest(request) {
               properties: {
                 count: { 
                   type: 'number',
-                  description: 'Number of messages to retrieve',
-                  default: 10
+                  description: 'Number of messages to retrieve'
                 }
-              }
+              },
+              required: []
             }
           },
           {
@@ -134,7 +137,8 @@ function handleRequest(request) {
             description: 'Get connection status',
             inputSchema: {
               type: 'object',
-              properties: {}
+              properties: {},
+              required: []
             }
           }
         ]
@@ -143,6 +147,11 @@ function handleRequest(request) {
       
     case 'tools/call':
       handleToolCall(params.name, params.arguments || {}, id);
+      break;
+    
+    case 'notifications/initialized':
+      // Client is ready, no response needed
+      process.stderr.write('MCP client initialized\n');
       break;
       
     default:
