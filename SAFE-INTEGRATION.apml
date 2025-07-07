@@ -1,0 +1,44 @@
+---
+apml: 1.0
+type: integration_guide
+title: Safe ADE Integration Options
+---
+
+problem:
+  description: Direct MCP proxy integration crashes Claude Desktop
+  likely_causes:
+    - Immediate network calls on startup
+    - Incorrect stdio handling
+    - Electron app sensitivity to subprocess errors
+
+safe_alternatives:
+  option_1:
+    name: Web-based integration
+    description: Use the web UI directly
+    steps:
+      - Open https://ade-app.up.railway.app in browser
+      - Use the APML chat interface
+      - Copy/paste APML messages between Claude and ADE
+    
+  option_2:
+    name: Local test server
+    description: Run ADE locally first
+    steps:
+      - npm start (runs ade-server-apml.js locally)
+      - Test at http://localhost:3000
+      - Debug MCP integration locally
+    
+  option_3:
+    name: API integration
+    description: Use ADE's HTTP API directly
+    example: |
+      curl -X POST https://ade-app.up.railway.app/api/agents \
+        -H "Content-Type: application/apml" \
+        -d '---
+      apml: 1.0
+      type: agent_list
+      ---'
+
+recommended_approach:
+  Use the web UI for now while we debug the MCP integration
+  The APML system is fully functional via the web interface
