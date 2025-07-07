@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADE - APML Development Engine</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+        }
+
+        .nav-tab:hover {
+            background: var(--light);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+        }
+
+        /* Main Content */
+        .main-content {
+            background: var(--light);
+            overflow: hidden;
+        }
+
+        /* Dashboard View */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            height: 100%;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .panel {
+            background: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        /* Agent List */
+        .agent-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .agent-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .agent-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .agent-status {
+            font-size: 12px;
+            color: var(--secondary);
+        }
+
+        .agent-status.online {
+            color: var(--success);
+        }
+
+        /* Message Flow */
+        .message-item {
+            padding: 12px;
+            border-left: 3px solid var(--border);
+            margin-bottom: 12px;
+            background: var(--light);
+            border-radius: 4px;
+        }
+
+        .message-item.user {
+            border-left-color: var(--primary);
+        }
+
+        .message-item.agent {
+            border-left-color: var(--success);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--secondary);
+        }
+
+        .message-content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* VFS Browser */
+        .vfs-tree {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+        }
+
+        .vfs-item {
+            padding: 4px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .vfs-item:hover {
+            background: var(--light);
+        }
+
+        .vfs-item.selected {
+            background: var(--primary);
+            color: white;
+        }
+
+        .vfs-icon {
+            width: 16px;
+            text-align: center;
+        }
+
+        /* Chat Interface */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .chat-input-container {
+            border-top: 1px solid var(--border);
+            padding: 16px;
+            background: white;
+        }
+
+        .chat-input {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            resize: vertical;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+        }
+
+        /* APML Visualizer */
+        .visualizer {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            height: 100%;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .viz-panel {
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .viz-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        /* App Preview */
+        .app-preview {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafafa;
+            min-height: 400px;
+        }
+
+        .preview-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .preview-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .preview-dot:first-child { background: #ef4444; }
+        .preview-dot:nth-child(2) { background: #f59e0b; }
+        .preview-dot:nth-child(3) { background: #10b981; }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--light);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        /* Hidden by default */
+        .view {
+            display: none;
+            height: 100%;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Utilities */
+        .empty-state {
+            text-align: center;
+            color: var(--secondary);
+            padding: 40px;
+        }
+
+        pre {
+            background: var(--light);
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">ADE</div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-view="dashboard">Dashboard</button>
+                    <button class="nav-tab" data-view="visualizer">APML Visualizer</button>
+                    <button class="nav-tab" data-view="builder">ADE Builder</button>
+                </nav>
+            </div>
+            <div class="connection-status">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div class="view active" id="dashboard-view">
+                <div class="dashboard">
+                    <!-- Agents Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Active Agents</span>
+                            <button class="btn btn-primary" onclick="registerAgent()">+ Add</button>
+                        </div>
+                        <div class="panel-content" id="agents-list">
+                            <div class="agent-item">
+                                <div class="agent-name">L1_ORCH</div>
+                                <div class="agent-status online">● Online</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message Flow -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Message Flow</span>
+                            <button class="btn" onclick="clearMessages()">Clear</button>
+                        </div>
+                        <div class="panel-content" id="message-flow">
+                            <div class="empty-state">Waiting for messages...</div>
+                        </div>
+                        <div class="chat-input-container">
+                            <textarea class="chat-input" id="chat-input" placeholder="Enter APML message...
+---
+apml: 1.0
+type: brief
+from: user
+to: all
+---
+task: "></textarea>
+                            <button class="btn btn-primary" onclick="sendMessage()" style="margin-top: 8px; width: 100%;">Send APML Message</button>
+                        </div>
+                    </div>
+
+                    <!-- VFS Browser -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Virtual File System</span>
+                            <button class="btn" onclick="refreshVFS()">↻</button>
+                        </div>
+                        <div class="panel-content" id="vfs-browser">
+                            <div class="vfs-tree" id="vfs-tree">
+                                <div class="empty-state">No files yet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APML Visualizer View -->
+            <div class="view" id="visualizer-view">
+                <div class="visualizer">
+                    <div class="viz-panel">
+                        <div class="viz-title">App Structure</div>
+                        <div id="app-structure">
+                            <div class="empty-state">Define your app structure</div>
+                        </div>
+                    </div>
+                    <div class="viz-panel">
+                        <div class="viz-title">Message Protocols</div>
+                        <div id="message-protocols">
+                            <pre><code>app→user: notifications, updates
+user→app: commands, queries
+app→app: data sync, events</code></pre>
+                        </div>
+                    </div>
+                    <div class="viz-panel">
+                        <div class="viz-title">APML Specification</div>
+                        <div id="apml-spec">
+                            <pre><code>---
+apml: 1.0
+type: app_spec
+name: MyApp
+---
+screens:
+  - home
+  - profile
+  - settings
+components:
+  - navigation
+  - user-card
+  - data-list</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADE Builder View -->
+            <div class="view" id="builder-view">
+                <div class="visualizer">
+                    <div class="viz-panel">
+                        <div class="viz-title">App Components</div>
+                        <div id="app-components">
+                            <div class="empty-state">Components will appear here</div>
+                        </div>
+                    </div>
+                    <div class="viz-panel">
+                        <div class="viz-title">Live Preview</div>
+                        <div class="app-preview">
+                            <div class="preview-header">
+                                <span class="preview-dot"></span>
+                                <span class="preview-dot"></span>
+                                <span class="preview-dot"></span>
+                            </div>
+                            <div id="app-preview-content">
+                                <div class="empty-state">App preview will render here</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="viz-panel">
+                        <div class="viz-title">Generated Code</div>
+                        <div id="generated-code">
+                            <pre><code>// Generated code will appear here</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/public/js/apml.js"></script>
+    <script src="/public/js/ade-websocket-apml.js"></script>
+    <script>
+        // View switching
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Update active tab
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show corresponding view
+                const viewName = tab.dataset.view;
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById(`${viewName}-view`).classList.add('active');
+            });
+        });
+
+        // WebSocket connection status
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            
+            if (connected) {
+                dot.classList.add('connected');
+                text.textContent = 'Connected';
+            } else {
+                dot.classList.remove('connected');
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        // Message handling
+        let messageCount = 0;
+        function addMessage(message) {
+            const flow = document.getElementById('message-flow');
+            if (flow.querySelector('.empty-state')) {
+                flow.innerHTML = '';
+            }
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = `message-item ${message.from === 'user' ? 'user' : 'agent'}`;
+            messageEl.innerHTML = `
+                <div class="message-header">
+                    <span>${message.from || 'anonymous'} → ${message.to || 'all'}</span>
+                    <span>${new Date(message.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div class="message-content">${message.type}: ${message.task || message.content || JSON.stringify(message)}</div>
+            `;
+            
+            flow.appendChild(messageEl);
+            flow.scrollTop = flow.scrollHeight;
+            
+            // Update VFS if it's a VFS update
+            if (message.type === 'vfs_update') {
+                updateVFSTree(message);
+            }
+        }
+
+        // VFS tree
+        const vfsFiles = new Map();
+        function updateVFSTree(message) {
+            if (message.path) {
+                vfsFiles.set(message.path, {
+                    content: message.content,
+                    from: message.from,
+                    timestamp: message.timestamp
+                });
+                renderVFSTree();
+            }
+        }
+
+        function renderVFSTree() {
+            const tree = document.getElementById('vfs-tree');
+            if (vfsFiles.size === 0) {
+                tree.innerHTML = '<div class="empty-state">No files yet</div>';
+                return;
+            }
+            
+            tree.innerHTML = '';
+            vfsFiles.forEach((file, path) => {
+                const item = document.createElement('div');
+                item.className = 'vfs-item';
+                item.innerHTML = `
+                    <span class="vfs-icon">📄</span>
+                    <span>${path}</span>
+                `;
+                item.onclick = () => viewFile(path, file);
+                tree.appendChild(item);
+            });
+        }
+
+        function viewFile(path, file) {
+            alert(`File: ${path}\n\nContent:\n${file.content}`);
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const apmlText = input.value.trim();
+            if (!apmlText) return;
+            
+            try {
+                const message = APML.parse(apmlText);
+                adeWs.sendAPML(message);
+                addMessage(message);
+                
+                // Reset input with template
+                input.value = `---
+apml: 1.0
+type: brief
+from: user
+to: all
+---
+task: `;
+            } catch (e) {
+                alert('Invalid APML format: ' + e.message);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            // WebSocket event override
+            const originalHandle = adeWs.handleAPMLMessage;
+            adeWs.handleAPMLMessage = function(message) {
+                originalHandle.call(this, message);
+                addMessage(message);
+            };
+            
+            // Connection status override
+            const originalStatus = adeWs.updateStatus;
+            adeWs.updateStatus = function(connected) {
+                originalStatus.call(this, connected);
+                updateConnectionStatus(connected);
+            };
+        });
+
+        // Utility functions
+        function clearMessages() {
+            document.getElementById('message-flow').innerHTML = '<div class="empty-state">Waiting for messages...</div>';
+        }
+
+        function refreshVFS() {
+            fetch('/api/vfs')
+                .then(res => res.text())
+                .then(data => {
+                    const vfsData = APML.parse(data);
+                    if (vfsData.files) {
+                        vfsData.files.forEach(file => {
+                            vfsFiles.set(file.path, file);
+                        });
+                        renderVFSTree();
+                    }
+                })
+                .catch(err => console.error('Error fetching VFS:', err));
+        }
+
+        function registerAgent() {
+            const agentAPML = prompt('Enter agent APML:\n\n---\napml: 1.0\ntype: agent_registration\n---\nid: agent-001\nname: My Agent\ncapabilities:\n  - task1\n  - task2');
+            if (agentAPML) {
+                try {
+                    const agent = APML.parse(agentAPML);
+                    adeWs.sendAPML(agent);
+                } catch (e) {
+                    alert('Invalid APML: ' + e.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

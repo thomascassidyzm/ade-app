@@ -27,8 +27,13 @@ app.use((req, res, next) => {
 // Serve static files
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Main app
+// Main app - serve the proper 3-column interface
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'ade-interface-v2.html'));
+});
+
+// Legacy interface
+app.get('/old', (req, res) => {
   res.sendFile(path.join(__dirname, 'index-apml.html'));
 });
 
