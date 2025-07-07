@@ -68,6 +68,51 @@ api.get('/health', (req, res) => {
   res.send(APMLParser.stringify(health));
 });
 
+// VFS API endpoints
+api.get('/vfs', (req, res) => {
+  const files = Array.from(vfs.entries()).map(([path, data]) => ({
+    path,
+    size: data.content ? data.content.length : 0,
+    modified: data.timestamp,
+    from: data.from
+  }));
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'vfs_listing',
+    files: files,
+    count: files.length,
+    timestamp: new Date().toISOString()
+  }));
+});
+
+api.get('/vfs/*', (req, res) => {
+  const path = req.params[0];
+  const file = vfs.get(path) || vfs.get('/' + path);
+  
+  if (!file) {
+    res.status(404).type('application/apml');
+    res.send(APMLParser.stringify({
+      apml: '1.0',
+      type: 'error',
+      error: 'File not found',
+      path: path
+    }));
+    return;
+  }
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'vfs_file',
+    path: path,
+    content: file.content,
+    metadata: file.metadata,
+    timestamp: file.timestamp
+  }));
+});
+
 // Agent management
 const agents = new Map();
 
@@ -347,6 +392,40 @@ const server = app.listen(PORT, () => {
 const wss = new WebSocket.Server({ server });
 const clients = new Set();
 
+// In-memory VFS for demo (in production would use database)
+const vfs = new Map();
+
+// Handle VFS operations
+function handleVFSOperation(message) {
+  const content = message.content || {};
+  const path = content.path;
+  const fileContent = content.content || content.fileContent;
+  
+  if (!path) return;
+  
+  // Store in VFS
+  vfs.set(path, {
+    content: fileContent,
+    metadata: content.metadata || {},
+    from: message.from,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Broadcast VFS update to all clients
+  broadcast({
+    apml: '1.0',
+    type: 'vfs_update',
+    operation: 'write',
+    path: path,
+    content: fileContent,
+    metadata: content.metadata,
+    from: 'VFS',
+    timestamp: new Date().toISOString()
+  });
+  
+  console.log(`VFS: Wrote file ${path} from ${message.from}`);
+}
+
 function broadcast(apmlMessage) {
   const apmlString = APMLParser.stringify(apmlMessage);
   
@@ -380,6 +459,11 @@ wss.on('connection', (ws) => {
       // Add server metadata
       message.from = message.from || 'anonymous';
       message.timestamp = message.timestamp || new Date().toISOString();
+      
+      // Handle VFS operations
+      if (message.type === 'vfs_write' || message.type === 'apml_message' && message.messageType === 'vfs_write') {
+        handleVFSOperation(message);
+      }
       
       // Broadcast to all clients
       broadcast(message);

@@ -78,6 +78,10 @@ class ADEWebSocket {
         console.error('Server error:', message.error, message.message);
         break;
         
+      case 'vfs_update':
+        this.handleVFSUpdate(message);
+        break;
+        
       default:
         // Add to chat if on chat page
         const messages = document.getElementById('chat-messages');
@@ -133,6 +137,45 @@ class ADEWebSocket {
     } else {
       console.error('WebSocket not connected');
     }
+  }
+
+  handleVFSUpdate(message) {
+    console.log('VFS Update:', message);
+    
+    // Update VFS panel if it exists
+    const vfsPanel = document.getElementById('vfs-files');
+    if (vfsPanel) {
+      // Add file to VFS display
+      const fileItem = document.createElement('div');
+      fileItem.className = 'vfs-file';
+      fileItem.innerHTML = `
+        <div class="file-path">${message.path}</div>
+        <div class="file-info">
+          <span class="file-size">${message.content ? message.content.length : 0} bytes</span>
+          <span class="file-from">from ${message.from}</span>
+        </div>
+      `;
+      fileItem.onclick = () => this.viewFile(message.path);
+      vfsPanel.appendChild(fileItem);
+    }
+    
+    // Also update file tree if it exists
+    if (window.updateFileTree) {
+      window.updateFileTree();
+    }
+  }
+  
+  viewFile(path) {
+    // Simple file viewer
+    fetch(`/api/vfs/${path}`)
+      .then(res => res.text())
+      .then(data => {
+        const content = APML.parse(data);
+        if (content.type === 'vfs_file') {
+          alert(`File: ${path}\n\n${content.content}`);
+        }
+      })
+      .catch(err => console.error('Error viewing file:', err));
   }
 
   disconnect() {
