@@ -6,14 +6,39 @@
     <title>ADE - Start New Project</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --secondary: #64748b;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --dark: #1e293b;
-            --light: #f8fafc;
-            --border: #e2e8f0;
+            /* Dark theme colors */
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-tertiary: #1a1a1f;
+            --surface: rgba(255, 255, 255, 0.05);
+            --surface-hover: rgba(255, 255, 255, 0.08);
+            
+            /* Accent colors */
+            --primary: #6366f1;
+            --primary-glow: #818cf8;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --accent-border: rgba(139, 92, 246, 0.3);
+            
+            /* Text colors */
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            
+            /* Status colors */
+            --success: #34d399;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            
+            /* Glass effect */
+            --glass: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 20px rgba(99, 102, 241, 0.3);
+            
+            /* Legacy variables for compatibility */
+            --border: var(--glass-border);
+            --secondary: var(--text-secondary);
+            --light: var(--surface);
         }
 
         * {
@@ -24,9 +49,10 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--light);
-            color: var(--dark);
+            background: var(--bg-primary);
+            color: var(--text-primary);
             height: 100vh;
+            margin: 0;
             overflow: hidden;
         }
 
@@ -39,12 +65,25 @@
 
         /* Header */
         .header {
-            background: white;
-            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--accent-gradient);
+            opacity: 0.3;
         }
 
         .header-left {
@@ -56,7 +95,11 @@
         .logo {
             font-size: 24px;
             font-weight: bold;
-            color: var(--primary);
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
         }
 
         .phase-indicator {
@@ -72,15 +115,18 @@
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 13px;
-            background: white;
-            border: 1px solid var(--border);
-            color: var(--secondary);
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
 
         .phase-step.active {
-            background: var(--primary);
+            background: var(--accent-gradient);
             color: white;
-            border-color: var(--primary);
+            border-color: transparent;
+            box-shadow: var(--glow);
         }
 
         .phase-step.completed {
@@ -115,16 +161,28 @@
         .main-content {
             display: flex;
             height: 100%;
-            background: white;
+            background: var(--bg-primary);
         }
 
         /* Sidebar */
         .sidebar {
             width: 280px;
-            background: var(--light);
-            border-right: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--glass-border);
             padding: 24px;
             overflow-y: auto;
+            position: relative;
+        }
+        
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, var(--accent-border), transparent);
+            opacity: 0.5;
         }
 
         .sidebar-section {
@@ -140,23 +198,27 @@
         }
 
         .example-card {
-            background: white;
-            border: 1px solid var(--border);
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            backdrop-filter: blur(10px);
         }
 
         .example-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background: var(--surface-hover);
+            border-color: var(--accent-border);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
         }
 
         .example-title {
             font-weight: 600;
             margin-bottom: 4px;
+            color: var(--text-primary);
         }
 
         .example-desc {
@@ -173,14 +235,28 @@
 
         .chat-header {
             padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-            background: white;
+            border-bottom: 1px solid var(--glass-border);
+            background: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        .chat-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--accent-border), transparent);
+            opacity: 0.5;
         }
 
         .chat-title {
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 8px;
+            color: var(--text-primary);
         }
 
         .chat-subtitle {
@@ -195,6 +271,25 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            background: var(--bg-primary);
+        }
+        
+        /* Custom scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--surface-hover);
+            border-radius: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
         }
 
         .message {
@@ -222,13 +317,16 @@
         }
 
         .message.user .message-bubble {
-            background: var(--primary);
+            background: var(--accent-gradient);
             color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
 
         .message.assistant .message-bubble {
-            background: var(--light);
-            border: 1px solid var(--border);
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            backdrop-filter: blur(10px);
         }
 
         .message-meta {
@@ -244,7 +342,7 @@
 
         /* APML Preview */
         .apml-preview {
-            background: #1e1e1e;
+            background: rgba(0, 0, 0, 0.4);
             color: #d4d4d4;
             padding: 16px;
             border-radius: 8px;
@@ -252,6 +350,8 @@
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 12px;
             overflow-x: auto;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
         }
 
         .apml-preview .keyword {
@@ -269,8 +369,21 @@
         /* Chat Input */
         .chat-input-container {
             padding: 20px 24px;
-            border-top: 1px solid var(--border);
-            background: white;
+            border-top: 1px solid var(--glass-border);
+            background: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        .chat-input-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--accent-border), transparent);
+            opacity: 0.5;
         }
 
         .input-wrapper {
@@ -284,24 +397,34 @@
             min-height: 44px;
             max-height: 120px;
             padding: 10px 16px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-border);
             border-radius: 22px;
             resize: none;
             font-family: inherit;
             font-size: 14px;
             line-height: 1.5;
+            background: var(--surface);
+            color: var(--text-primary);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
         }
 
         .chat-input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--accent-border);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            background: var(--surface-hover);
+        }
+        
+        .chat-input::placeholder {
+            color: var(--text-tertiary);
         }
 
         .send-button {
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            background: var(--primary);
+            background: var(--accent-gradient);
             color: white;
             border: none;
             cursor: pointer;
@@ -309,16 +432,22 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .send-button:hover {
-            background: #1d4ed8;
             transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .send-button:active {
+            transform: scale(0.95);
         }
 
         .send-button:disabled {
-            background: var(--secondary);
+            background: var(--surface-hover);
             cursor: not-allowed;
+            box-shadow: none;
         }
 
         /* Action buttons */
@@ -330,18 +459,22 @@
 
         .action-button {
             padding: 8px 16px;
-            border: 1px solid var(--primary);
-            background: white;
-            color: var(--primary);
+            border: 1px solid var(--accent-border);
+            background: var(--surface);
+            color: var(--primary-glow);
             border-radius: 8px;
             font-size: 13px;
             cursor: pointer;
             transition: all 0.2s;
+            backdrop-filter: blur(10px);
         }
 
         .action-button:hover {
-            background: var(--primary);
+            background: var(--accent-gradient);
             color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            transform: translateY(-1px);
         }
 
         /* Progress indicator */
@@ -350,18 +483,21 @@
             align-items: center;
             gap: 8px;
             padding: 12px;
-            background: var(--light);
+            background: var(--surface);
+            border: 1px solid var(--glass-border);
             border-radius: 8px;
             margin: 8px 0;
+            backdrop-filter: blur(10px);
         }
 
         .spinner {
             width: 16px;
             height: 16px;
-            border: 2px solid var(--primary);
+            border: 2px solid var(--primary-glow);
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
+            filter: drop-shadow(0 0 4px var(--primary-glow));
         }
 
         @keyframes spin {
@@ -437,8 +573,13 @@
             <!-- Chat Area -->
             <div class="chat-area">
                 <div class="chat-header">
-                    <div class="chat-title">Brief Your App with L1_ORCH</div>
-                    <div class="chat-subtitle">Describe what you want to build in natural language</div>
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <div class="chat-title">Brief Your App with L1_ORCH</div>
+                            <div class="chat-subtitle">Describe what you want to build in natural language</div>
+                        </div>
+                        <button class="action-button" onclick="clearHistory()" style="margin: 0;">Clear History</button>
+                    </div>
                 </div>
 
                 <div class="chat-messages" id="chat-messages">
@@ -559,6 +700,11 @@
                         <button class="action-button" onclick="refineSpec()">Refine Further</button>
                     </div>
                 `;
+            } else if (typeof content === 'string') {
+                // Convert markdown-style formatting to HTML
+                messageContent = content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
             }
             
             messageDiv.innerHTML = `
@@ -568,6 +714,21 @@
             
             messages.appendChild(messageDiv);
             messages.scrollTop = messages.scrollHeight;
+            
+            // Save to history
+            messageHistory.push({
+                type,
+                content,
+                meta,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only last 100 messages
+            if (messageHistory.length > 100) {
+                messageHistory = messageHistory.slice(-100);
+            }
+            
+            localStorage.setItem('ade_messages', JSON.stringify(messageHistory));
         }
 
         // Show thinking indicator
@@ -632,6 +793,9 @@
 
         // Store current APML spec
         let currentAPMLSpec = null;
+        
+        // Message history persistence
+        let messageHistory = JSON.parse(localStorage.getItem('ade_messages') || '[]');
 
         // Load APML Library
         async function loadLibrary() {
@@ -665,11 +829,57 @@
                     addMessage('assistant', message);
                 });
         }
+        
+        function clearHistory() {
+            if (confirm('Clear all message history?')) {
+                messageHistory = [];
+                localStorage.removeItem('ade_messages');
+                location.reload();
+            }
+        }
 
         // Initialize
         window.addEventListener('load', () => {
             // Load library catalog
             loadLibrary();
+            
+            // Restore message history
+            const messages = document.getElementById('chat-messages');
+            if (messageHistory.length > 0) {
+                // Clear welcome message
+                messages.innerHTML = '';
+                
+                // Restore all messages
+                messageHistory.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${msg.type}`;
+                    
+                    let messageContent = msg.content;
+                    if (typeof msg.content === 'object' && msg.content.apml) {
+                        messageContent = `
+                            <div>Here's the APML specification:</div>
+                            <div class="apml-preview">${formatAPML(msg.content)}</div>
+                            <div class="action-buttons">
+                                <button class="action-button" onclick="proceedToVisualize()">Visualize This →</button>
+                                <button class="action-button" onclick="refineSpec()">Refine Further</button>
+                            </div>
+                        `;
+                    } else if (typeof msg.content === 'string') {
+                        messageContent = msg.content
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n/g, '<br>');
+                    }
+                    
+                    messageDiv.innerHTML = `
+                        <div class="message-bubble">${messageContent}</div>
+                        <div class="message-meta">${msg.meta || (msg.type === 'user' ? 'You' : 'L1_ORCH')} • ${new Date(msg.timestamp).toLocaleTimeString()}</div>
+                    `;
+                    
+                    messages.appendChild(messageDiv);
+                });
+                
+                messages.scrollTop = messages.scrollHeight;
+            }
             
             // Override WebSocket handlers
             const originalStatus = adeWs.updateStatus;
@@ -685,16 +895,29 @@
                 
                 hideThinking();
                 
-                // Handle L1_ORCH responses
-                if (message.from === 'L1_ORCH' || message.type === 'response') {
-                    if (message.content) {
-                        if (message.content.apml_spec) {
-                            currentAPMLSpec = message.content.apml_spec;
-                            addMessage('assistant', { apml: currentAPMLSpec });
-                        } else {
-                            addMessage('assistant', message.content.message || JSON.stringify(message.content));
-                        }
+                // Skip system messages and only show chat content
+                if (message.type === 'system_guidance' || 
+                    message.type === 'library_catalog' || 
+                    message.type === 'capability_library' ||
+                    message.type === 'phase_guidance' ||
+                    message.type === 'welcome') {
+                    return; // Don't display these in chat
+                }
+                
+                // Handle L1_ORCH responses - only show actual messages
+                if ((message.from === 'L1_ORCH' || message.type === 'response') && message.content) {
+                    if (message.content.message) {
+                        // Only show the message content, not the whole APML structure
+                        addMessage('assistant', message.content.message);
+                    } else if (message.content.apml_spec) {
+                        currentAPMLSpec = message.content.apml_spec;
+                        addMessage('assistant', { apml: currentAPMLSpec });
                     }
+                }
+                
+                // Handle other message types that should be visible
+                if (message.type === 'apml_message' && message.content && message.content.message) {
+                    addMessage('assistant', message.content.message);
                 }
             };
         });
