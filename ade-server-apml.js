@@ -537,15 +537,31 @@ wss.on('connection', (ws) => {
   
   ws.on('message', (data) => {
     try {
-      // Parse incoming APML
-      const message = APMLParser.parse(data.toString());
+      let message;
+      const dataStr = data.toString();
+      
+      // Try to parse as JSON first (for Claude Desktop compatibility)
+      if (dataStr.trim().startsWith('{')) {
+        try {
+          message = JSON.parse(dataStr);
+          // Convert JSON to APML-like structure if needed
+          message.apml = message.apml || '1.0';
+        } catch (jsonError) {
+          // Not valid JSON, try APML
+          message = APMLParser.parse(dataStr);
+        }
+      } else {
+        // Parse as APML
+        message = APMLParser.parse(dataStr);
+      }
       
       // Add server metadata
       message.from = message.from || 'anonymous';
       message.timestamp = message.timestamp || new Date().toISOString();
       
-      // Handle agent connections
-      if (message.type === 'agent_connect' && message.agentId === 'L1_ORCH') {
+      // Handle agent connections (both formats)
+      if ((message.type === 'agent_connect' && message.agentId === 'L1_ORCH') ||
+          (message.type === 'register' && message.agent && message.agent.id === 'L1_ORCH')) {
         console.log('L1_ORCH connected, sending APML guidance and library...');
         
         // Send guidance package to L1_ORCH

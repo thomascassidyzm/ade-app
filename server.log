@@ -1,0 +1,7 @@
+🚀 ADE Server (APML Native) running on port 3000
+   http://localhost:3000
+   MCP endpoint: http://localhost:3000/api/mcp
+   All internal APIs use APML format
+Client connected. Total clients: 1
+L1_ORCH connected, sending APML guidance and library...
+Client disconnected. Total clients: 0
