@@ -8,6 +8,9 @@ const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs').promises;
 const APMLParser = require('./apml-parser');
+const APMLGuidanceSystem = require('./apml-guidance-system');
+const APMLLibrarySystem = require('./apml-library-system');
+const APMLCapabilityLibrary = require('./apml-capability-library');
 
 const app = express();
 
@@ -176,8 +179,78 @@ api.get('/agents', (req, res) => {
   res.send(APMLParser.stringify(agentList));
 });
 
+// APML Library API
+api.get('/library', (req, res) => {
+  const catalog = {
+    apml: '1.0',
+    type: 'library_catalog',
+    timestamp: new Date().toISOString(),
+    version: librarySystem.libraryVersion,
+    categories: Object.keys(librarySystem.components).map(cat => ({
+      name: cat,
+      count: Object.keys(librarySystem.components[cat]).length
+    })),
+    templates: Object.keys(librarySystem.templates),
+    total_components: librarySystem.countComponents()
+  };
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify(catalog));
+});
+
+api.get('/library/:category', (req, res) => {
+  const category = req.params.category;
+  const components = librarySystem.getCategory(category);
+  
+  if (!components) {
+    return res.status(404).type('application/apml').send(APMLParser.stringify({
+      apml: '1.0',
+      type: 'error',
+      error: 'Category not found'
+    }));
+  }
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'category_components',
+    category: category,
+    components: Object.keys(components).map(name => ({
+      name,
+      path: `${category}/${name}`,
+      description: components[name].description
+    }))
+  }));
+});
+
+api.get('/library/:category/:component', (req, res) => {
+  const path = `${req.params.category}/${req.params.component}`;
+  const component = librarySystem.getComponent(path);
+  
+  if (!component) {
+    return res.status(404).type('application/apml').send(APMLParser.stringify({
+      apml: '1.0',
+      type: 'error',
+      error: 'Component not found'
+    }));
+  }
+  
+  res.type('application/apml');
+  res.send(APMLParser.stringify({
+    apml: '1.0',
+    type: 'component_detail',
+    path: path,
+    component: component
+  }));
+});
+
 // VFS - APML native
 const vfs = new Map();
+
+// Initialize APML Systems
+const guidanceSystem = new APMLGuidanceSystem();
+const librarySystem = new APMLLibrarySystem();
+const capabilityLibrary = new APMLCapabilityLibrary();
 
 api.post('/vfs/write', (req, res) => {
   const data = req.body;
@@ -470,6 +543,62 @@ wss.on('connection', (ws) => {
       // Add server metadata
       message.from = message.from || 'anonymous';
       message.timestamp = message.timestamp || new Date().toISOString();
+      
+      // Handle agent connections
+      if (message.type === 'agent_connect' && message.agentId === 'L1_ORCH') {
+        console.log('L1_ORCH connected, sending APML guidance and library...');
+        
+        // Send guidance package to L1_ORCH
+        const guidance = guidanceSystem.formatAsAPMLMessage();
+        ws.send(APMLParser.stringify(guidance));
+        
+        // Send complete APML library
+        const library = librarySystem.formatAsAPMLMessage();
+        ws.send(APMLParser.stringify(library));
+        
+        // Send capability library for sophisticated features
+        const capabilities = {
+          apml: '1.0',
+          type: 'capability_library',
+          from: 'ADE_SYSTEM',
+          to: 'L1_ORCH',
+          timestamp: new Date().toISOString(),
+          content: {
+            version: capabilityLibrary.version,
+            message: "🚀 Advanced Capability Library loaded! Build original apps with sophisticated features.",
+            categories: Object.keys(capabilityLibrary.capabilities),
+            capabilities: capabilityLibrary.capabilities,
+            methods: {
+              suggestCapabilities: "Get capability suggestions for innovative apps",
+              calculateTimeSaved: "Show development time saved"
+            }
+          }
+        };
+        ws.send(APMLParser.stringify(capabilities));
+        
+        // Also send phase-specific guidance
+        const phaseGuidance = {
+          apml: '1.0',
+          type: 'phase_guidance',
+          from: 'ADE_SYSTEM',
+          to: 'L1_ORCH',
+          content: {
+            current_phase: 'specification',
+            guidance: guidanceSystem.getPhaseGuidance('specification'),
+            library_available: true,
+            component_count: librarySystem.countComponents(),
+            library_methods: {
+              getSuggestionsForApp: "Get AI-powered component suggestions based on description",
+              buildFromTemplate: "Build complete spec from template + customizations",
+              estimateBuildTime: "Calculate realistic build time for selected components",
+              searchComponents: "Search library by keyword"
+            },
+            message: "Welcome L1_ORCH! You now have access to:\n• APML patterns and conversation helpers\n• Basic component library with " + librarySystem.countComponents() + " UI components\n• ADVANCED CAPABILITY LIBRARY with sophisticated integrations\n• Voice, AI, Payments, Real-time, Video capabilities\n• Each capability saves WEEKS of development\n\nFocus on helping users build ORIGINAL apps with sophisticated features, not template-based apps!"
+          },
+          timestamp: new Date().toISOString()
+        };
+        ws.send(APMLParser.stringify(phaseGuidance));
+      }
       
       // Handle VFS operations
       if (message.type === 'vfs_write' || message.type === 'apml_message' && message.messageType === 'vfs_write') {

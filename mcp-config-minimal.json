@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ade-websocket": {
+      "command": "node",
+      "args": ["/path/to/mcp-websocket-client.js"],
+      "env": {
+        "BRIDGE_URL": "ws://localhost:8765"
+      }
+    }
+  }
+}

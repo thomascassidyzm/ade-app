@@ -420,9 +420,8 @@
 
                 <div class="sidebar-section">
                     <div class="sidebar-title">APML Library</div>
-                    <div class="example-card" onclick="browseLibrary()">
-                        <div class="example-title">Browse Components</div>
-                        <div class="example-desc">Reusable APML patterns</div>
+                    <div id="library-categories">
+                        <!-- Will be populated dynamically -->
                     </div>
                 </div>
 
@@ -630,15 +629,48 @@
             addMessage('user', "Let's refine this specification further...");
         }
 
-        function browseLibrary() {
-            addMessage('assistant', "Here are some reusable APML components from the library:\n\n• Authentication flows\n• Navigation patterns\n• Data tables\n• Form components\n• Chat interfaces\n\nWhich would you like to explore?");
-        }
 
         // Store current APML spec
         let currentAPMLSpec = null;
 
+        // Load APML Library
+        async function loadLibrary() {
+            try {
+                const response = await fetch('/api/library');
+                const data = await response.text();
+                const catalog = APML.parse(data);
+                
+                const categoriesDiv = document.getElementById('library-categories');
+                categoriesDiv.innerHTML = catalog.categories.map(cat => `
+                    <div class="example-card" onclick="browseCategory('${cat.name}')">
+                        <div class="example-title">${cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}</div>
+                        <div class="example-desc">${cat.count} components</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load library:', error);
+            }
+        }
+
+        function browseCategory(category) {
+            addMessage('assistant', `Loading ${category} components...`);
+            fetch(`/api/library/${category}`)
+                .then(res => res.text())
+                .then(data => {
+                    const components = APML.parse(data);
+                    let message = `**${category.toUpperCase()} Components:**\n\n`;
+                    components.components.forEach(comp => {
+                        message += `• **${comp.name}** - ${comp.description}\n  Use: \`@import ${comp.path}\`\n\n`;
+                    });
+                    addMessage('assistant', message);
+                });
+        }
+
         // Initialize
         window.addEventListener('load', () => {
+            // Load library catalog
+            loadLibrary();
+            
             // Override WebSocket handlers
             const originalStatus = adeWs.updateStatus;
             adeWs.updateStatus = function(connected) {
