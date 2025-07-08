@@ -5,3 +5,7 @@
 Client connected. Total clients: 1
 L1_ORCH connected, sending APML guidance and library...
 Client disconnected. Total clients: 0
+Client connected. Total clients: 1
+Client connected. Total clients: 2
+L1_ORCH connected, sending APML guidance and library...
+VFS: Wrote file /test/mcp-test.apml from L1_ORCH

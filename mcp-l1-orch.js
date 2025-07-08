@@ -6,11 +6,11 @@
 
 const readline = require('readline');
 const WebSocket = require('ws');
-const https = require('https');
+const http = require('http');
 
 // Configuration
-const ADE_WS_URL = process.env.ADE_WS_URL || 'wss://ade-app.up.railway.app';
-const ADE_HTTP_URL = process.env.ADE_HTTP_URL || 'https://ade-app.up.railway.app';
+const ADE_WS_URL = process.env.ADE_WS_URL || 'ws://localhost:3000';
+const ADE_HTTP_URL = process.env.ADE_HTTP_URL || 'http://localhost:3000';
 
 // Global state
 let ws = null;
@@ -187,6 +187,46 @@ function handleMCPRequest(request) {
               },
               required: ['status', 'message']
             }
+          },
+          {
+            name: 'write_apml_file',
+            description: 'Write APML specification to VFS',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                path: { type: 'string', description: 'File path in VFS (e.g. /specs/app.apml)' },
+                content: { type: 'string', description: 'APML content to write' },
+                metadata: { 
+                  type: 'object',
+                  description: 'Optional metadata',
+                  properties: {
+                    phase: { type: 'string' },
+                    timestamp: { type: 'string' },
+                    from: { type: 'string' }
+                  }
+                }
+              },
+              required: ['path', 'content']
+            }
+          },
+          {
+            name: 'read_vfs_file',
+            description: 'Read file from VFS',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                path: { type: 'string', description: 'File path to read' }
+              },
+              required: ['path']
+            }
+          },
+          {
+            name: 'list_vfs_files',
+            description: 'List all files in VFS',
+            inputSchema: {
+              type: 'object',
+              properties: {}
+            }
           }
         ]
       });
@@ -290,6 +330,69 @@ function handleToolCall(tool, args, id) {
       } else {
         sendError(id, -32603, 'WebSocket not connected');
       }
+      break;
+      
+    case 'write_apml_file':
+      if (ws && isConnected) {
+        // Send VFS write command via WebSocket
+        ws.send(JSON.stringify({
+          type: 'vfs_write',
+          from: 'L1_ORCH',
+          content: {
+            path: args.path,
+            content: args.content,
+            metadata: args.metadata || {
+              from: 'L1_ORCH',
+              timestamp: new Date().toISOString()
+            }
+          }
+        }));
+        sendResponse(id, {
+          content: [{
+            type: 'text',
+            text: `Writing APML file to VFS: ${args.path}`
+          }]
+        });
+      } else {
+        sendError(id, -32603, 'WebSocket not connected');
+      }
+      break;
+      
+    case 'read_vfs_file':
+      // Make HTTP request to read VFS file
+      const readUrl = `${ADE_HTTP_URL}/api/vfs/${args.path}`;
+      http.get(readUrl, (res) => {
+        let data = '';
+        res.on('data', (chunk) => data += chunk);
+        res.on('end', () => {
+          sendResponse(id, {
+            content: [{
+              type: 'text',
+              text: data
+            }]
+          });
+        });
+      }).on('error', (err) => {
+        sendError(id, -32603, `Failed to read VFS: ${err.message}`);
+      });
+      break;
+      
+    case 'list_vfs_files':
+      // Make HTTP request to list VFS files
+      http.get(`${ADE_HTTP_URL}/api/vfs`, (res) => {
+        let data = '';
+        res.on('data', (chunk) => data += chunk);
+        res.on('end', () => {
+          sendResponse(id, {
+            content: [{
+              type: 'text',
+              text: data
+            }]
+          });
+        });
+      }).on('error', (err) => {
+        sendError(id, -32603, `Failed to list VFS: ${err.message}`);
+      });
       break;
       
     default:
