@@ -717,10 +717,14 @@
                     </div>
                 `;
             } else if (typeof messageContent === 'string') {
+                // Remove YAML multi-line indicators
+                messageContent = messageContent.replace(/^\|\s*/, '');
+                
                 // Convert markdown-style formatting to HTML
                 messageContent = messageContent
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
+                    .replace(/\n/g, '<br>')
+                    .trim();
             }
             
             messageDiv.innerHTML = `
@@ -893,9 +897,13 @@
                             </div>
                         `;
                     } else if (typeof messageContent === 'string') {
+                        // Remove YAML multi-line indicators
+                        messageContent = messageContent.replace(/^\|\s*/, '');
+                        
                         messageContent = messageContent
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\n/g, '<br>');
+                            .replace(/\n/g, '<br>')
+                            .trim();
                     }
                     
                     messageDiv.innerHTML = `
