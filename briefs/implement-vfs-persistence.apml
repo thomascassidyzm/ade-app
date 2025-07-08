@@ -1,0 +1,39 @@
+---
+apml: 1.0
+type: agent_brief
+from: meta_orchestrator
+to: backend_specialist
+---
+task: Implement VFS Persistence Across Server Restarts
+priority: critical
+context:
+  issue: "VFS data lost on every server restart - breaks immortality protocol"
+  current_behavior:
+    - VFS uses in-memory Map() object
+    - All files lost when server stops
+    - L1_ORCH's 32 files of work vanished
+    - Breaks the promise of persistent context
+    
+requirements:
+  - Implement VFS persistence to disk
+  - Auto-save VFS contents on write
+  - Auto-load VFS contents on server start
+  - Maintain APML format for storage
+  - Keep in-memory cache for performance
+  
+implementation_options:
+  1. JSON file storage (simple, fast)
+  2. SQLite database (structured, queryable)
+  3. File system mirror (each VFS path = actual file)
+  
+suggested_approach:
+  - Use .vfs/ directory for persistence
+  - Save as individual APML files matching VFS paths
+  - Load all on startup into memory Map
+  - This maintains both performance and persistence
+  
+deliverables:
+  - Updated ade-server-apml.js with persistence
+  - VFS survives server restarts
+  - All previous work restored
+  - Test showing data persistence

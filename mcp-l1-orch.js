@@ -100,16 +100,39 @@ function handleAPMLMessage(apmlString) {
 
 // MCP Request handling
 rl.on('line', (line) => {
+  process.stderr.write(`MCP Request: ${line}\n`);
   try {
     const request = JSON.parse(line);
+    // Validate request has required fields
+    if (!request || typeof request !== 'object') {
+      throw new Error('Invalid request format');
+    }
+    if (request.id === undefined) {
+      throw new Error('Missing request id');
+    }
     handleMCPRequest(request);
   } catch (e) {
-    sendError(null, -32700, 'Parse error');
+    // If we can't parse or validate, send error with id -1
+    const errorResponse = {
+      jsonrpc: '2.0',
+      id: null,
+      error: {
+        code: -32700,
+        message: 'Parse error: ' + e.message
+      }
+    };
+    console.log(JSON.stringify(errorResponse));
   }
 });
 
 function handleMCPRequest(request) {
   const { method, params, id } = request;
+  
+  // Extra validation
+  if (!method) {
+    sendError(id || null, -32600, 'Invalid request: missing method');
+    return;
+  }
   
   switch (method) {
     case 'initialize':
@@ -127,6 +150,35 @@ function handleMCPRequest(request) {
     case 'tools/list':
       sendResponse(id, {
         tools: [
+          {
+            name: 'get_messages',
+            description: 'Check for user messages from web UI',
+            inputSchema: {
+              type: 'object',
+              properties: {}
+            }
+          },
+          {
+            name: 'send_apml',
+            description: 'Send APML response to user',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                to: { type: 'string' },
+                type: { type: 'string' },
+                content: { type: 'object' }
+              },
+              required: ['to', 'type', 'content']
+            }
+          },
+          {
+            name: 'get_status',
+            description: 'Check connection status',
+            inputSchema: {
+              type: 'object',
+              properties: {}
+            }
+          },
           {
             name: 'check_briefs',
             description: 'Check for pending briefs from web UI',
@@ -161,6 +213,18 @@ function handleMCPRequest(request) {
                 taskId: { type: 'string' }
               },
               required: ['type']
+            }
+          },
+          {
+            name: 'assign_task',
+            description: 'Assign a task to a specific agent',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                agentId: { type: 'string' },
+                task: { type: 'object' }
+              },
+              required: ['agentId', 'task']
             }
           },
           {
@@ -233,7 +297,15 @@ function handleMCPRequest(request) {
       break;
       
     case 'tools/call':
-      handleToolCall(params.name, params.arguments || {}, id);
+      if (!params || !params.name) {
+        sendError(id, -32602, 'Invalid params: missing tool name');
+        return;
+      }
+      try {
+        handleToolCall(params.name, params.arguments || {}, id);
+      } catch (error) {
+        sendError(id, -32603, `Tool execution error: ${error.message}`);
+      }
       break;
       
     default:
@@ -243,7 +315,8 @@ function handleMCPRequest(request) {
 
 function handleToolCall(tool, args, id) {
   switch (tool) {
-    case 'check_briefs':
+    case 'get_messages':
+    case 'check_briefs':  // Alias for backward compatibility
       const briefs = [...pendingBriefs];
       pendingBriefs = []; // Clear after reading
       sendResponse(id, {
@@ -252,6 +325,40 @@ function handleToolCall(tool, args, id) {
           text: briefs.length > 0 
             ? `Found ${briefs.length} pending briefs:\n${JSON.stringify(briefs, null, 2)}`
             : 'No pending briefs'
+        }]
+      });
+      break;
+      
+    case 'send_apml':
+      if (ws && isConnected) {
+        // Send APML message through WebSocket
+        ws.send(JSON.stringify({
+          type: 'agent_response',
+          from: 'L1_ORCH',
+          to: args.to || 'user',
+          messageType: args.type || 'response',
+          content: args.content
+        }));
+        sendResponse(id, {
+          content: [{
+            type: 'text',
+            text: `APML message sent to ${args.to || 'user'}`
+          }]
+        });
+      } else {
+        sendError(id, -32603, 'WebSocket not connected');
+      }
+      break;
+      
+    case 'get_status':
+      sendResponse(id, {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            connected: isConnected,
+            websocket: ws ? 'active' : 'inactive',
+            pendingBriefs: pendingBriefs.length
+          }, null, 2)
         }]
       });
       break;
@@ -325,6 +432,46 @@ function handleToolCall(tool, args, id) {
           content: [{
             type: 'text',
             text: `Progress reported: ${args.status}`
+          }]
+        });
+      } else {
+        sendError(id, -32603, 'WebSocket not connected');
+      }
+      break;
+      
+    case 'create_worker':
+      if (ws && isConnected) {
+        const workerId = `${args.type.toUpperCase()}_${Date.now()}`;
+        ws.send(JSON.stringify({
+          type: 'spawn_agent',
+          agentType: args.type,
+          agentId: workerId,
+          taskId: args.taskId,
+          from: 'L1_ORCH'
+        }));
+        sendResponse(id, {
+          content: [{
+            type: 'text',
+            text: `Spawning ${args.type} worker with ID: ${workerId}`
+          }]
+        });
+      } else {
+        sendError(id, -32603, 'WebSocket not connected');
+      }
+      break;
+      
+    case 'assign_task':
+      if (ws && isConnected) {
+        ws.send(JSON.stringify({
+          type: 'task',
+          from: 'L1_ORCH',
+          to: args.agentId,
+          content: args.task
+        }));
+        sendResponse(id, {
+          content: [{
+            type: 'text',
+            text: `Task assigned to ${args.agentId}`
           }]
         });
       } else {

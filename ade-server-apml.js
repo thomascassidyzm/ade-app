@@ -584,9 +584,13 @@ wss.on('connection', (ws) => {
             message: "🚀 Advanced Capability Library loaded! Build original apps with sophisticated features.",
             categories: Object.keys(capabilityLibrary.capabilities),
             capabilities: capabilityLibrary.capabilities,
+            agent_capabilities: capabilityLibrary.getAgentCapabilities(),
+            process_libraries: capabilityLibrary.getProcessLibraries(),
             methods: {
               suggestCapabilities: "Get capability suggestions for innovative apps",
-              calculateTimeSaved: "Show development time saved"
+              calculateTimeSaved: "Show development time saved",
+              getAgentForTask: "Get specialized agent recommendation for a task",
+              getProcessFlow: "Get complete process flow for common features"
             }
           }
         };
@@ -645,7 +649,7 @@ wss.on('connection', (ws) => {
                 "/tests/eye-test-results.apml - A/B test results"
               ]
             },
-            message: "Welcome L1_ORCH! You now have access to:\n• APML patterns and conversation helpers\n• Basic component library with " + librarySystem.countComponents() + " UI components\n• ADVANCED CAPABILITY LIBRARY with sophisticated integrations\n• Voice, AI, Payments, Real-time, Video capabilities\n• Each capability saves WEEKS of development\n\n⚠️ CRITICAL: Always use content.message field when sending messages (see critical_message_format above)!\n\nFocus on helping users build ORIGINAL apps with sophisticated features, not template-based apps!"
+            message: "Welcome L1_ORCH! You are the MASTER ORCHESTRATOR.\n\n🚨 CRITICAL CHANGE: You must NEVER implement code yourself!\n\nYOUR ROLE:\n• Create APML specifications\n• Use create_worker to spawn agents (frontend, backend, architect, tester)\n• Use assign_task to delegate work to agents\n• Monitor progress and stay available for users\n\nNEVER DO:\n• Write Vue components\n• Write JavaScript/CSS\n• Do implementation work\n\nALWAYS DO:\n• Orchestrate parallel agents\n• Let agents write the actual code\n• Stay available for user conversation\n\nYou have " + librarySystem.countComponents() + " components and advanced capabilities.\n\n⚠️ CRITICAL: Always use content.message field when sending messages!"
           },
           timestamp: new Date().toISOString()
         };
@@ -655,6 +659,61 @@ wss.on('connection', (ws) => {
       // Handle VFS operations
       if (message.type === 'vfs_write' || message.type === 'apml_message' && message.messageType === 'vfs_write') {
         handleVFSOperation(message);
+      }
+      
+      // Handle agent spawning
+      if (message.type === 'spawn_agent') {
+        console.log(`Agent spawn request from ${message.from}: ${message.agentType} (${message.agentId})`);
+        
+        // Actually spawn the agent process
+        const { spawn } = require('child_process');
+        const agentProcess = spawn('node', [
+          path.join(__dirname, 'agent-worker.js'),
+          message.agentType,
+          message.agentId,
+          message.taskId || ''
+        ], {
+          env: { ...process.env, ADE_WS_URL: `ws://localhost:${PORT}` },
+          detached: false
+        });
+        
+        agentProcess.stdout.on('data', (data) => {
+          console.log(`[${message.agentId}]`, data.toString().trim());
+        });
+        
+        agentProcess.stderr.on('data', (data) => {
+          console.error(`[${message.agentId} ERROR]`, data.toString().trim());
+        });
+        
+        agentProcess.on('close', (code) => {
+          console.log(`[${message.agentId}] Process exited with code ${code}`);
+        });
+        
+        // Track active agents
+        if (!global.activeAgents) global.activeAgents = new Map();
+        global.activeAgents.set(message.agentId, {
+          process: agentProcess,
+          type: message.agentType,
+          spawnedBy: message.from,
+          startTime: new Date()
+        });
+        
+        // Notify all clients about new agent
+        broadcast({
+          apml: '1.0',
+          type: 'agent_spawned',
+          agentType: message.agentType,
+          agentId: message.agentId,
+          spawnedBy: message.from,
+          taskId: message.taskId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Handle task assignment to agents
+      if (message.type === 'assign_task' && message.to) {
+        console.log(`Task assignment from ${message.from} to ${message.to}`);
+        // Task will be broadcast and picked up by the target agent
       }
       
       // Broadcast to all clients

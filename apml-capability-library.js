@@ -430,6 +430,409 @@ class APMLCapabilityLibrary {
     
     return suggestions;
   }
+  
+  getProcessLibraries() {
+    return {
+      // 🔐 AUTHENTICATION FLOWS
+      auth_flows: {
+        complete_auth_system: {
+          name: "Complete Authentication System",
+          description: "Production-ready auth with all edge cases handled",
+          time_saved: "4-6 weeks",
+          includes: [
+            "signup_with_verification",
+            "login_with_2fa",
+            "forgot_password",
+            "change_password",
+            "social_logins",
+            "session_management",
+            "device_tracking"
+          ],
+          apml_flow: {
+            signup: {
+              steps: [
+                { action: "validate_email_format", error_handling: "inline_validation" },
+                { action: "check_existing_user", error_handling: "suggest_login" },
+                { action: "create_user_account", rollback: true },
+                { action: "send_verification_email", retry: 3 },
+                { action: "show_verification_pending_ui" },
+                { action: "handle_email_verification", timeout: "24_hours" }
+              ]
+            },
+            forgot_password: {
+              steps: [
+                { action: "validate_email", security: "rate_limit_by_ip" },
+                { action: "generate_reset_token", expiry: "1_hour" },
+                { action: "send_reset_email", template: "password_reset" },
+                { action: "validate_reset_token" },
+                { action: "accept_new_password", requirements: "configurable" },
+                { action: "invalidate_all_sessions", notify: true }
+              ]
+            }
+          }
+        },
+        
+        family_accounts: {
+          name: "Family/Multi-Profile System",
+          description: "Netflix-style profile switching under one account",
+          time_saved: "3-4 weeks",
+          features: [
+            "parent_account_management",
+            "child_profiles_with_restrictions",
+            "profile_switching_ui",
+            "content_filtering_by_profile",
+            "usage_tracking_per_profile",
+            "parental_controls"
+          ],
+          apml_flow: {
+            profile_management: {
+              max_profiles: 5,
+              profile_types: ["adult", "teen", "child"],
+              switching: "pin_protected_optional",
+              data_isolation: "profile_scoped",
+              shared_data: ["subscription", "payment_method"]
+            }
+          }
+        }
+      },
+      
+      // 👤 USER MANAGEMENT
+      user_management: {
+        profile_management: {
+          name: "Complete User Profile System",
+          description: "Everything users need to manage their account",
+          time_saved: "2-3 weeks",
+          includes: [
+            "change_email_with_verification",
+            "change_display_name",
+            "avatar_upload_with_crop",
+            "timezone_preferences",
+            "notification_settings",
+            "privacy_controls",
+            "data_export_gdpr"
+          ],
+          apml_flow: {
+            change_email: {
+              steps: [
+                { action: "verify_current_password" },
+                { action: "validate_new_email" },
+                { action: "send_verification_to_new" },
+                { action: "maintain_old_email_active" },
+                { action: "confirm_new_email" },
+                { action: "update_all_references" },
+                { action: "notify_both_emails" }
+              ]
+            }
+          }
+        },
+        
+        account_deletion: {
+          name: "GDPR-Compliant Account Deletion",
+          description: "Proper account deletion with data retention policies",
+          time_saved: "1-2 weeks",
+          features: [
+            "soft_delete_with_grace_period",
+            "data_export_before_deletion",
+            "cascade_deletion_rules",
+            "regulatory_compliance",
+            "reactivation_window"
+          ]
+        }
+      },
+      
+      // 📧 COMMUNICATION FLOWS
+      communication: {
+        notification_system: {
+          name: "Multi-Channel Notification System",
+          description: "In-app, email, SMS, and push notifications",
+          time_saved: "3-4 weeks",
+          channels: {
+            in_app: {
+              features: ["real_time_updates", "notification_center", "mark_as_read", "categories"]
+            },
+            email: {
+              features: ["templates", "unsubscribe_management", "bounce_handling", "tracking"]
+            },
+            push: {
+              features: ["ios_apns", "android_fcm", "web_push", "rich_notifications"]
+            },
+            sms: {
+              features: ["twilio_integration", "opt_in_management", "delivery_tracking"]
+            }
+          },
+          user_preferences: {
+            granular_controls: true,
+            channel_preferences: "per_notification_type",
+            quiet_hours: true,
+            digest_options: ["immediate", "hourly", "daily", "weekly"]
+          }
+        }
+      },
+      
+      // 💳 SUBSCRIPTION MANAGEMENT
+      subscriptions: {
+        complete_subscription_flow: {
+          name: "SaaS Subscription Management",
+          description: "Complete subscription lifecycle management",
+          time_saved: "4-5 weeks",
+          includes: [
+            "plan_selection_ui",
+            "trial_period_management",
+            "upgrade_downgrade_flows",
+            "payment_failure_handling",
+            "dunning_management",
+            "cancellation_flow",
+            "win_back_campaigns"
+          ],
+          apml_flow: {
+            trial_to_paid: {
+              steps: [
+                { action: "trial_expiry_warnings", schedule: [-7, -3, -1, 0] },
+                { action: "capture_payment_method", timing: "optional_during_trial" },
+                { action: "auto_convert_or_downgrade", based_on: "user_settings" },
+                { action: "usage_based_upgrade_prompts" }
+              ]
+            },
+            payment_failure: {
+              retry_schedule: [1, 3, 5, 7],
+              user_notifications: ["email", "in_app_banner"],
+              grace_period: 7,
+              service_degradation: "configurable"
+            }
+          }
+        }
+      },
+      
+      // 🎮 GAMIFICATION
+      gamification: {
+        achievement_system: {
+          name: "Complete Achievement/Badge System",
+          description: "Engagement through gamification",
+          time_saved: "2-3 weeks",
+          includes: [
+            "achievement_definitions",
+            "progress_tracking",
+            "badge_unlocking_ui",
+            "leaderboards",
+            "streak_tracking",
+            "milestone_rewards"
+          ],
+          features: {
+            achievement_types: ["one_time", "cumulative", "streak", "milestone"],
+            notification: "celebratory_animation",
+            sharing: ["social_media", "in_app_feed"],
+            retroactive: true
+          }
+        }
+      },
+      
+      // 🔍 SEARCH & DISCOVERY
+      search: {
+        advanced_search: {
+          name: "Full-Text Search with Filters",
+          description: "Google-quality search experience",
+          time_saved: "3-4 weeks",
+          includes: [
+            "instant_search_suggestions",
+            "search_history",
+            "saved_searches",
+            "filter_combinations",
+            "search_analytics",
+            "did_you_mean",
+            "no_results_handling"
+          ],
+          technical: {
+            backends: ["elasticsearch", "algolia", "typesense", "meilisearch"],
+            features: ["typo_tolerance", "synonyms", "faceted_search", "geo_search"]
+          }
+        }
+      },
+      
+      // 📊 ANALYTICS & TRACKING
+      analytics: {
+        user_analytics: {
+          name: "Complete Analytics Integration",
+          description: "Track everything users do (privacy-compliant)",
+          time_saved: "2-3 weeks",
+          includes: [
+            "page_view_tracking",
+            "event_tracking",
+            "user_journey_mapping",
+            "conversion_funnels",
+            "retention_analytics",
+            "custom_dashboards"
+          ],
+          privacy_compliance: {
+            gdpr: ["consent_management", "data_anonymization", "right_to_deletion"],
+            cookie_banner: true,
+            tracking_preferences: "granular_user_control"
+          }
+        }
+      },
+      
+      // 🛒 E-COMMERCE FLOWS
+      ecommerce: {
+        shopping_cart: {
+          name: "Complete Shopping Cart System",
+          description: "Amazon-level cart experience",
+          time_saved: "3-4 weeks",
+          includes: [
+            "persistent_cart_across_devices",
+            "save_for_later",
+            "quantity_management",
+            "price_change_handling",
+            "abandoned_cart_recovery",
+            "guest_checkout",
+            "cart_sharing"
+          ]
+        },
+        
+        checkout_flow: {
+          name: "Optimized Checkout Process",
+          description: "Conversion-optimized checkout",
+          time_saved: "4-5 weeks",
+          steps: [
+            "address_autocomplete",
+            "shipping_calculator",
+            "tax_calculation",
+            "payment_method_selection",
+            "order_review",
+            "post_purchase_upsell"
+          ]
+        }
+      }
+    };
+  }
+  
+  getAgentCapabilities() {
+    return {
+      frontend_specialist: {
+        name: "Frontend UI Expert",
+        model: "claude-opus-4",
+        system_prompt: `You are a specialized frontend development agent. Your expertise:
+• Vue.js, React, Svelte component architecture
+• Responsive design and accessibility (WCAG)
+• Performance optimization and lazy loading
+• State management patterns
+• Animation and micro-interactions
+• Component testing strategies
+
+When given a task, you write production-ready components with:
+- Clean, maintainable code
+- Proper error handling
+- Accessibility features
+- Performance optimizations
+- Beautiful, intuitive UI`,
+        capabilities: ["vue", "react", "css", "animations", "a11y"],
+        typical_tasks: ["Build UI components", "Create responsive layouts", "Implement interactions"]
+      },
+      
+      backend_specialist: {
+        name: "Backend API Expert", 
+        model: "claude-opus-4",
+        system_prompt: `You are a specialized backend development agent. Your expertise:
+• RESTful and GraphQL API design
+• Database design and optimization
+• Authentication and authorization
+• Caching strategies
+• Message queues and event-driven architecture
+• Microservices patterns
+
+When given a task, you write secure, scalable services with:
+- Proper error handling
+- Input validation
+- Rate limiting
+- Database transactions
+- Comprehensive logging`,
+        capabilities: ["node", "python", "databases", "apis", "security"],
+        typical_tasks: ["Build APIs", "Design schemas", "Implement auth"]
+      },
+      
+      architect_specialist: {
+        name: "System Architecture Expert",
+        model: "claude-opus-4",
+        system_prompt: `You are a system architecture specialist. Your expertise:
+• Distributed systems design
+• Scalability patterns
+• Security architecture
+• Cloud-native patterns
+• Domain-driven design
+• Event sourcing and CQRS
+
+You create comprehensive architecture documents with:
+- System diagrams
+- Data flow specifications
+- Security considerations
+- Scaling strategies
+- Technology choices with rationale`,
+        capabilities: ["architecture", "system_design", "security", "scalability"],
+        typical_tasks: ["Design system architecture", "Plan scalability", "Security review"]
+      },
+      
+      ai_specialist: {
+        name: "AI Integration Expert",
+        model: "claude-opus-4",
+        system_prompt: `You are an AI integration specialist. Your expertise:
+• LLM integration (OpenAI, Anthropic, Google)
+• Prompt engineering
+• RAG systems
+• Vector databases
+• ML model deployment
+• AI safety and alignment
+
+You implement AI features with:
+- Efficient prompt design
+- Token optimization
+- Error handling for AI responses
+- Safety filters
+- Performance monitoring`,
+        capabilities: ["llm", "embeddings", "rag", "ml_ops", "prompt_engineering"],
+        typical_tasks: ["Integrate AI APIs", "Build RAG systems", "Optimize prompts"]
+      },
+      
+      testing_specialist: {
+        name: "QA & Testing Expert",
+        model: "claude-opus-4", 
+        system_prompt: `You are a testing and QA specialist. Your expertise:
+• Test strategy design
+• Unit, integration, and E2E testing
+• Performance testing
+• Security testing
+• Accessibility testing
+• Test automation
+
+You create comprehensive test suites with:
+- High code coverage
+- Edge case handling
+- Performance benchmarks
+- Security vulnerability scanning
+- Accessibility compliance`,
+        capabilities: ["jest", "cypress", "playwright", "security_testing", "load_testing"],
+        typical_tasks: ["Write test suites", "Performance testing", "Security audit"]
+      },
+      
+      realtime_specialist: {
+        name: "Real-time Systems Expert",
+        model: "claude-opus-4",
+        system_prompt: `You are a real-time systems specialist. Your expertise:
+• WebSocket architecture
+• Server-Sent Events
+• WebRTC implementation
+• Message queuing (Redis, RabbitMQ)
+• Presence systems
+• Collaborative editing (CRDTs)
+
+You build real-time features with:
+- Low latency design
+- Connection resilience
+- State synchronization
+- Conflict resolution
+- Scalable pub/sub patterns`,
+        capabilities: ["websockets", "webrtc", "redis", "pubsub", "crdts"],
+        typical_tasks: ["Build chat systems", "Live collaboration", "Real-time sync"]
+      }
+    };
+  }
 
   // Calculate total time saved
   calculateTimeSaved(selectedCapabilities) {

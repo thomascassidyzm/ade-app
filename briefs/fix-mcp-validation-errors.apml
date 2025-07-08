@@ -1,0 +1,32 @@
+---
+apml: 1.0
+type: agent_brief
+from: meta_orchestrator
+to: backend_specialist
+---
+task: Fix MCP L1_ORCH Server Validation Errors
+priority: urgent
+context:
+  issue: "Claude Desktop showing Zod validation errors when connecting to MCP server"
+  symptoms:
+    - "invalid_union" errors on id fields
+    - "invalid_type" expecting string/number but receiving undefined
+    - "unrecognized_keys" errors
+  current_file: /Users/tomcassidy/claude-code-experiments/APML-Projects/ADE/multi-agent-system/mcp-l1-orch.js
+  
+requirements:
+  - Ensure all JSON-RPC responses have proper id field (never null/undefined)
+  - Fix response format to match MCP protocol expectations
+  - Handle edge cases where request might not have id
+  - Validate all tool responses return correct format
+  - Test with actual Claude Desktop connection
+  
+technical_notes:
+  - MCP uses JSON-RPC 2.0 protocol
+  - Response must have either 'result' or 'error', never both
+  - Tool responses need specific content structure
+  
+deliverables:
+  - Fixed mcp-l1-orch.js 
+  - No validation errors in Claude Desktop
+  - All tools (get_messages, send_apml, get_status) working

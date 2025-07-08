@@ -1,0 +1,33 @@
+---
+apml: 1.0
+type: agent_brief
+from: meta_orchestrator
+to: backend_specialist
+---
+task: Complete Agent Spawning Infrastructure
+priority: high
+context:
+  issue: "Agent spawning system partially built but not fully functional"
+  current_state:
+    - agent-worker.js exists but only simulates work
+    - Server can spawn processes but agents don't use real Claude instances
+    - No connection between agent specialists and their system prompts
+    
+requirements:
+  - Connect agent-worker.js to actual Claude API (via MCP or direct)
+  - Pass system prompts from capability library to spawned agents
+  - Implement real work execution, not simulation
+  - Ensure agents can write actual code to VFS
+  - Add agent lifecycle management (start, monitor, stop)
+  
+architecture_notes:
+  - Each agent should be a separate process
+  - Agents need their specialist system prompt on spawn
+  - Agents communicate via WebSocket to ADE server
+  - VFS writes should show correct agent attribution
+  
+deliverables:
+  - Updated agent-worker.js with real implementation
+  - Agent spawning that creates actual Claude instances
+  - Test showing multiple agents working in parallel
+  - VFS files attributed to correct agents (not L1_ORCH)

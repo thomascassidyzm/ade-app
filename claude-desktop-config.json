@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ade-l1-orch": {
+      "command": "node",
+      "args": ["/Users/tomcassidy/claude-code-experiments/APML-Projects/ADE/multi-agent-system/mcp-l1-orch.js"],
+      "env": {
+        "ADE_WS_URL": "ws://localhost:3000",
+        "ADE_HTTP_URL": "http://localhost:3000"
+      }
+    }
+  }
+}
