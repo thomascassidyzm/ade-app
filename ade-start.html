@@ -946,20 +946,46 @@
                     return; // Don't echo user's own messages
                 }
                 
-                // Handle L1_ORCH responses - only show actual messages
-                if ((message.from === 'L1_ORCH' || message.type === 'response') && message.content) {
-                    if (message.content.message) {
-                        // Only show the message content, not the whole APML structure
-                        addMessage('assistant', message.content.message);
-                    } else if (message.content.apml_spec) {
+                // Handle L1_ORCH messages - check all possible formats
+                if (message.from === 'L1_ORCH') {
+                    let messageText = null;
+                    
+                    // Try different content structures
+                    if (message.content) {
+                        if (typeof message.content === 'string') {
+                            messageText = message.content;
+                        } else if (message.content.message) {
+                            messageText = message.content.message;
+                        } else if (message.content.text) {
+                            messageText = message.content.text;
+                        }
+                    } else if (message.message) {
+                        messageText = message.message;
+                    } else if (message.text) {
+                        messageText = message.text;
+                    }
+                    
+                    if (messageText) {
+                        addMessage('assistant', messageText);
+                    } else if (message.content && message.content.apml_spec) {
                         currentAPMLSpec = message.content.apml_spec;
                         addMessage('assistant', { apml: currentAPMLSpec });
                     }
+                    return;
                 }
                 
-                // Handle other message types that should be visible
+                // Handle response type messages
+                if (message.type === 'response' && message.content) {
+                    if (message.content.message) {
+                        addMessage('assistant', message.content.message);
+                    }
+                    return;
+                }
+                
+                // Handle apml_message type
                 if (message.type === 'apml_message' && message.content && message.content.message) {
                     addMessage('assistant', message.content.message);
+                    return;
                 }
             };
         });

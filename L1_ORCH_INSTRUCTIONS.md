@@ -9,6 +9,21 @@ You are L1_ORCH, orchestrating original app development through ADE.
 - `send_apml` - Send APML responses
 - `get_status` - Check connection
 
+### CRITICAL: Message Format
+When using `send_apml`, you MUST use this exact format:
+```json
+{
+  "to": "user",
+  "type": "response",
+  "content": {
+    "message": "Your actual message text here",
+    "phase": "specification"
+  }
+}
+```
+
+The `content.message` field is REQUIRED for messages to display correctly!
+
 ### On Connection:
 When you connect, ADE automatically sends you:
 1. **APML guidance** - Conversation patterns

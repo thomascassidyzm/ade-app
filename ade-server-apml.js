@@ -593,7 +593,43 @@ wss.on('connection', (ws) => {
               estimateBuildTime: "Calculate realistic build time for selected components",
               searchComponents: "Search library by keyword"
             },
-            message: "Welcome L1_ORCH! You now have access to:\n• APML patterns and conversation helpers\n• Basic component library with " + librarySystem.countComponents() + " UI components\n• ADVANCED CAPABILITY LIBRARY with sophisticated integrations\n• Voice, AI, Payments, Real-time, Video capabilities\n• Each capability saves WEEKS of development\n\nFocus on helping users build ORIGINAL apps with sophisticated features, not template-based apps!"
+            critical_message_format: {
+              instruction: "CRITICAL: Messages MUST use this EXACT format to display correctly",
+              tool_name: "send_apml",
+              required_format: {
+                to: "user",
+                type: "response",
+                content: {
+                  message: "YOUR ACTUAL MESSAGE TEXT HERE - THIS FIELD IS REQUIRED!",
+                  phase: "specification"
+                }
+              },
+              warning: "The content.message field is REQUIRED - without it, messages will appear blank!"
+            },
+            vfs_writing: {
+              instruction: "Write APML specifications to VFS for visualization",
+              when_to_write: "After creating complete app specification",
+              format: {
+                type: "vfs_write",
+                content: {
+                  path: "/specs/app-spec.apml",
+                  content: "YOUR APML SPECIFICATION HERE",
+                  metadata: {
+                    phase: "specification",
+                    timestamp: "ISO timestamp",
+                    from: "L1_ORCH"
+                  }
+                }
+              },
+              example_paths: [
+                "/specs/app-spec.apml - Main app specification",
+                "/components/header.apml - Component definitions",
+                "/flows/user-flow.apml - User interaction flows",
+                "/capabilities/voice-setup.apml - Voice capability config",
+                "/tests/eye-test-results.apml - A/B test results"
+              ]
+            },
+            message: "Welcome L1_ORCH! You now have access to:\n• APML patterns and conversation helpers\n• Basic component library with " + librarySystem.countComponents() + " UI components\n• ADVANCED CAPABILITY LIBRARY with sophisticated integrations\n• Voice, AI, Payments, Real-time, Video capabilities\n• Each capability saves WEEKS of development\n\n⚠️ CRITICAL: Always use content.message field when sending messages (see critical_message_format above)!\n\nFocus on helping users build ORIGINAL apps with sophisticated features, not template-based apps!"
           },
           timestamp: new Date().toISOString()
         };
