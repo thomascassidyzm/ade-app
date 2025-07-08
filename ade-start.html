@@ -698,8 +698,15 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
             
-            // Handle APML preview
+            // Extract actual message content from APML structure if needed
             let messageContent = content;
+            
+            // If content is an object with a message property, extract it
+            if (typeof content === 'object' && content.message) {
+                messageContent = content.message;
+            }
+            
+            // Handle APML preview (only for actual APML specs, not regular messages)
             if (typeof content === 'object' && content.apml) {
                 messageContent = `
                     <div>Here's the APML specification:</div>
@@ -709,9 +716,9 @@
                         <button class="action-button" onclick="refineSpec()">Refine Further</button>
                     </div>
                 `;
-            } else if (typeof content === 'string') {
+            } else if (typeof messageContent === 'string') {
                 // Convert markdown-style formatting to HTML
-                messageContent = content
+                messageContent = messageContent
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\n/g, '<br>');
             }
@@ -921,8 +928,14 @@
                     message.type === 'library_catalog' || 
                     message.type === 'capability_library' ||
                     message.type === 'phase_guidance' ||
-                    message.type === 'welcome') {
+                    message.type === 'welcome' ||
+                    message.type === 'agent_connect') {
                     return; // Don't display these in chat
+                }
+                
+                // Skip echo of user's own messages (they're already displayed)
+                if (message.type === 'brief' && message.from === 'user') {
+                    return; // Don't echo user's own messages
                 }
                 
                 // Handle L1_ORCH responses - only show actual messages

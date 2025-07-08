@@ -100,6 +100,55 @@ function connect() {
     }
     
     process.stderr.write(`Received message #${message.id}\n`);
+    
+    // Parse the message to check if it's for L1_ORCH
+    try {
+      const parsedData = data.toString();
+      
+      // Check if it's an APML message
+      if (parsedData.includes('---\n')) {
+        // Try to parse as APML
+        const lines = parsedData.split('\n');
+        let isForL1ORCH = false;
+        
+        for (const line of lines) {
+          if (line.startsWith('to: L1_ORCH')) {
+            isForL1ORCH = true;
+            break;
+          }
+        }
+        
+        if (isForL1ORCH) {
+          // Extract message content
+          let messageContent = 'New message';
+          const contentMatch = parsedData.match(/message:\s*(.+?)(?:\n|$)/);
+          if (contentMatch) {
+            messageContent = contentMatch[1].trim();
+          }
+          
+          // Send notification to Claude Desktop
+          sendNotification({
+            method: 'notifications/message',
+            params: {
+              level: 'info',
+              message: `📨 L1_ORCH: ${messageContent.substring(0, 50)}${messageContent.length > 50 ? '...' : ''}`
+            }
+          });
+          
+          // Also send a tool notification to auto-trigger response
+          sendNotification({
+            method: 'notifications/tools/message',
+            params: {
+              type: 'new_message',
+              from: 'user',
+              preview: messageContent
+            }
+          });
+        }
+      }
+    } catch (error) {
+      process.stderr.write(`Error parsing message for notification: ${error}\n`);
+    }
   });
   
   ws.on('close', () => {
@@ -304,6 +353,15 @@ function sendError(id, code, message) {
       message: message
     }
   }));
+}
+
+// Send notification to Claude Desktop
+function sendNotification(notification) {
+  const message = {
+    jsonrpc: '2.0',
+    ...notification
+  };
+  console.log(JSON.stringify(message));
 }
 
 process.stderr.write('MCP WebSocket Client started\n');

@@ -82,31 +82,23 @@ class ADEWebSocket {
         this.handleVFSUpdate(message);
         break;
         
+      case 'brief':
+      case 'response':
+      case 'apml_message':
+        // These are chat messages - let the page handle them
+        // Don't display them here
+        break;
+        
       default:
-        // Add to chat if on chat page
-        const messages = document.getElementById('chat-messages');
-        if (messages) {
-          messages.innerHTML += `
-            <div class="message">
-              <pre>${APML.stringify(message)}</pre>
-            </div>
-          `;
-          messages.scrollTop = messages.scrollHeight;
-        }
+        // Let the page handle specific message types
+        // Don't display raw APML in chat
+        console.log('Unhandled message type:', message.type);
     }
   }
 
   handleBroadcast(message) {
-    // Add to chat
-    const messages = document.getElementById('chat-messages');
-    if (messages) {
-      messages.innerHTML += `
-        <div class="message">
-          <pre>${APML.stringify(message)}</pre>
-        </div>
-      `;
-      messages.scrollTop = messages.scrollHeight;
-    }
+    // Don't display raw APML - let the page handle messages properly
+    console.log('Broadcast message:', message);
   }
 
   updateStatus(connected) {
