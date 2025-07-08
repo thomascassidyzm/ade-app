@@ -15,6 +15,58 @@ let isConnected = false;
 let messageQueue = [];
 let messageCounter = 0;
 
+// Format object as APML string
+function formatAPML(obj) {
+  let result = '---\n';
+  
+  // Header fields in specific order
+  const headerFields = ['apml', 'type', 'from', 'to', 'timestamp'];
+  for (const field of headerFields) {
+    if (obj[field] !== undefined) {
+      result += `${field}: ${obj[field]}\n`;
+    }
+  }
+  
+  result += '---\n';
+  
+  // Format content
+  if (obj.content) {
+    result += formatObject(obj.content, 'content');
+  }
+  
+  return result;
+}
+
+function formatObject(obj, key, indent = '') {
+  let result = '';
+  
+  if (key) {
+    result += `${indent}${key}:\n`;
+    indent += '  ';
+  }
+  
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+      result += formatObject(v, k, indent);
+    } else if (Array.isArray(v)) {
+      result += `${indent}${k}:\n`;
+      for (const item of v) {
+        result += `${indent}  - ${item}\n`;
+      }
+    } else if (typeof v === 'string' && v.includes('\n')) {
+      // Multi-line strings
+      result += `${indent}${k}: |\n`;
+      v.split('\n').forEach(line => {
+        result += `${indent}  ${line}\n`;
+      });
+    } else {
+      result += `${indent}${k}: ${v}\n`;
+    }
+  }
+  
+  return result;
+}
+
 // Set up readline for MCP
 const rl = readline.createInterface({
   input: process.stdin,
@@ -194,15 +246,22 @@ function handleToolCall(tool, args, id) {
       
     case 'send_apml':
       if (ws && isConnected) {
+        // Convert to proper APML format
         const apmlMessage = {
-          type: 'apml_message',
+          apml: '1.0',
+          type: args.type || 'response',
           from: 'L1_ORCH',
-          to: args.to,
-          messageType: args.type,
-          content: args.content,
-          timestamp: new Date().toISOString()
+          to: args.to || 'user',
+          timestamp: new Date().toISOString(),
+          content: args.content
         };
-        ws.send(JSON.stringify(apmlMessage));
+        
+        // Convert to APML string format
+        const apmlString = formatAPML(apmlMessage);
+        
+        // Send as APML
+        ws.send(apmlString);
+        
         sendResponse(id, {
           content: [{
             type: 'text',

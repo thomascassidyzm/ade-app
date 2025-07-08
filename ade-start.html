@@ -61,6 +61,7 @@
             display: grid;
             grid-template-rows: 60px 1fr;
             height: 100vh;
+            overflow: hidden;
         }
 
         /* Header */
@@ -160,8 +161,9 @@
         /* Main Content */
         .main-content {
             display: flex;
-            height: 100%;
+            height: calc(100vh - 60px);
             background: var(--bg-primary);
+            overflow: hidden;
         }
 
         /* Sidebar */
@@ -231,9 +233,12 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-height: 0; /* Critical for flex children */
+            overflow: hidden;
         }
 
         .chat-header {
+            flex-shrink: 0;
             padding: 20px 24px;
             border-bottom: 1px solid var(--glass-border);
             background: var(--bg-secondary);
@@ -265,13 +270,16 @@
         }
 
         .chat-messages {
-            flex: 1;
+            flex: 1 1 auto;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 24px;
             display: flex;
             flex-direction: column;
             gap: 16px;
             background: var(--bg-primary);
+            scroll-behavior: smooth;
+            min-height: 0; /* Critical for scrolling in flexbox */
         }
         
         /* Custom scrollbar */
@@ -368,6 +376,7 @@
 
         /* Chat Input */
         .chat-input-container {
+            flex-shrink: 0;
             padding: 20px 24px;
             border-top: 1px solid var(--glass-border);
             background: var(--bg-secondary);
@@ -716,12 +725,17 @@
             messages.scrollTop = messages.scrollHeight;
             
             // Save to history
-            messageHistory.push({
+            const historyEntry = {
                 type,
                 content,
                 meta,
                 timestamp: new Date().toISOString()
-            });
+            };
+            
+            // Debug logging
+            console.log('Saving message to history:', historyEntry);
+            
+            messageHistory.push(historyEntry);
             
             // Keep only last 100 messages
             if (messageHistory.length > 100) {
@@ -855,6 +869,13 @@
                     messageDiv.className = `message ${msg.type}`;
                     
                     let messageContent = msg.content;
+                    
+                    // Handle APML message structures - extract just the message
+                    if (typeof msg.content === 'object' && msg.content.message) {
+                        messageContent = msg.content.message;
+                    }
+                    
+                    // Handle APML specifications
                     if (typeof msg.content === 'object' && msg.content.apml) {
                         messageContent = `
                             <div>Here's the APML specification:</div>
@@ -864,8 +885,8 @@
                                 <button class="action-button" onclick="refineSpec()">Refine Further</button>
                             </div>
                         `;
-                    } else if (typeof msg.content === 'string') {
-                        messageContent = msg.content
+                    } else if (typeof messageContent === 'string') {
+                        messageContent = messageContent
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                             .replace(/\n/g, '<br>');
                     }
